@@ -24,17 +24,13 @@
 
 package samyedit;
 
-public class AirCableChannel extends Channel {
-	public byte[] rawData = new byte[248];
+public class CloneChannel extends Channel {
+	public byte[] rawData = new byte[81];
 	
-	public static final byte QAM64	= 0x41;
-	public static final byte QAM256	= 0x42;
-	
-	public byte qam		= QAM64;
+	public static final byte FLAG_INACTIVE	= (byte)0x20;
+	public static final byte FLAG_SCRAMBLED	= (byte)0x04;
 	
 	public int nid		= -1;
 	public int freq		= -1;
-	public int symbr	= -1;
-
-	public int lcn		= 0;
+	//public byte flags	= 0x00;
 }

@@ -1,6 +1,6 @@
 /**
  * @author polskafan <polska at polskafan.de>
- * @version 0.40
+ * @version 0.42
   
 	Copyright 2009 by Timo Dobbrick
 	For more information see http://www.polskafan.de/samsung
@@ -28,7 +28,8 @@ package samyedit;
 public class Channel implements Cloneable {
 	public static final byte TYPE_CABLE	= (byte)0x01;
 	public static final byte TYPE_AIR	= (byte)0x02;
-	public static final byte TYPE_SAT	= (byte)0x03;
+	public static final byte TYPE_SAT	= (byte)0x04;
+	public static final byte TYPE_CLONE	= (byte)0x08;
 	
 	public static final byte STYPE_TV		= (byte)0x01;
 	public static final byte STYPE_RADIO	= (byte)0x02;

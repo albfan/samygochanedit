@@ -24,17 +24,9 @@
 
 package samyedit;
 
-public class AirCableChannel extends Channel {
-	public byte[] rawData = new byte[248];
-	
-	public static final byte QAM64	= 0x41;
-	public static final byte QAM256	= 0x42;
-	
-	public byte qam		= QAM64;
-	
-	public int nid		= -1;
-	public int freq		= -1;
-	public int symbr	= -1;
-
-	public int lcn		= 0;
+public class AirChannel extends AirCableChannel {
+	public AirChannel() {
+		super();
+		this.symbr = 0;
+	}
 }

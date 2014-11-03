@@ -1,6 +1,6 @@
 /**
  * @author polskafan <polska at polskafan.de>
- * @version 0.40
+ * @version 0.42
   
 	Copyright 2009 by Timo Dobbrick
 	For more information see http://www.polskafan.de/samsung
@@ -25,6 +25,7 @@
 package samyedit;
 
 import gui.ErrorMessage;
+import gui.Main;
 
 import java.util.Iterator;
 import java.util.TreeMap;
@@ -117,9 +118,16 @@ public class SkyFeedChannels {
 		c.mpid   = 0xFFFF;
 		c.vpid   = 0xFFFF;
 		c.stype  = Channel.STYPE_TV;
-		c.enc	|= Channel.FLAG_SCRAMBLED;
 		c.fav	&= ~Channel.FLAG_FAV_1;
 		c.fav79 &= ~(Channel.FLAG_FAV_1|Channel.FLAG_FAV_2|Channel.FLAG_FAV_3|Channel.FLAG_FAV_4);
+		
+		if(Main.mapType == Channel.TYPE_CLONE) {
+			CloneChannel clone = (CloneChannel) c;
+			clone.enc |= CloneChannel.FLAG_SCRAMBLED;
+		} else {
+			c.enc	|= Channel.FLAG_SCRAMBLED;
+		}
+		
 		channelList.put(c.num, c);
 	}
 }

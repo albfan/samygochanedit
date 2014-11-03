@@ -1,6 +1,6 @@
 /**
  * @author polskafan <polska at polskafan.de>
- * @version 0.40
+ * @version 0.42
   
 	Copyright 2009 by Timo Dobbrick
 	For more information see http://www.polskafan.de/samsung
@@ -38,7 +38,10 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
 
+import samyedit.AirCableChannel;
+import samyedit.AirChannel;
 import samyedit.Channel;
+import samyedit.SatChannel;
 
 public class Move {
 	public Move() {
@@ -133,6 +136,17 @@ class DoMove implements SelectionListener {
 			Main.moveChannels(selected, targetChan);
 		} else {
 			targetChan = new Channel();
+			switch(Main.mapType) {
+				case Channel.TYPE_AIR:
+					targetChan = new AirChannel();
+					break;
+				case Channel.TYPE_CABLE:
+					targetChan = new AirCableChannel();
+					break;
+				case Channel.TYPE_SAT:
+					targetChan = new SatChannel();
+					break;
+			}
 			targetChan.name = "DUMMY";
 			targetChan.num = targetNumber;
 			Main.channelList.put(targetChan.num, targetChan);

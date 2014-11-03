@@ -1,6 +1,6 @@
 /**
  * @author polskafan <polska at polskafan.de>
- * @version 0.40
+ * @version 0.42
   
 	Copyright 2009 by Timo Dobbrick
 	For more information see http://www.polskafan.de/samsung
@@ -24,6 +24,9 @@
 
 package gui;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -57,7 +60,9 @@ import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 
 import samyedit.AirCableChannel;
+import samyedit.AirChannel;
 import samyedit.Channel;
+import samyedit.CloneChannel;
 import samyedit.MapParser;
 import samyedit.SatChannel;
 import samyedit.SkyFeedChannels;
@@ -70,11 +75,12 @@ public class Main {
 	public static Label statusLabel;
 	public static Label modeLabel;
 	public static byte mapType = 0x01;
+	public static byte[] rawData;
 	
 	static TreeMap<Integer, Channel> channelList = new TreeMap<Integer, Channel>();
 	static String filepath;
 	
-	static String version = "v0.40";
+	static String version = "v0.42";
 	
 	public static void main(String[] args) {
 		display = new Display();
@@ -118,11 +124,14 @@ public class Main {
 		Menu mbar = new Menu(shell, SWT.BAR);
 		shell.setMenuBar(mbar);
 		
-		MyListener myListener = new MyListener(shell);
+		MyListener myListener = new MyListener();
+		MySelListener mySelListener = new MySelListener(shell);
+		
 		MenuItem MenuBar = new MenuItem(mbar, SWT.CASCADE);
 		MenuBar.setText("&File");
 		
 		Menu Menu = new Menu(MenuBar);
+		Menu.addListener(SWT.Show, myListener);
 		MenuBar.setMenu(Menu);
 		
 		MenuItem Item = new MenuItem(Menu, SWT.CASCADE);
@@ -133,37 +142,37 @@ public class Main {
 
 		Item = new MenuItem(subMenu, SWT.NONE);
 		Item.setText("map-AirD");
-		Item.setData("action", MyListener.ACTION_NEWAIR);
-		Item.addSelectionListener(myListener);
+		Item.setData("action", MySelListener.ACTION_NEWAIR);
+		Item.addSelectionListener(mySelListener);
 		
 		Item = new MenuItem(subMenu, SWT.NONE);
 		Item.setText("map-CableD");
-		Item.setData("action", MyListener.ACTION_NEWCABLE);
-		Item.addSelectionListener(myListener);
+		Item.setData("action", MySelListener.ACTION_NEWCABLE);
+		Item.addSelectionListener(mySelListener);
 		
 		Item = new MenuItem(subMenu, SWT.NONE);
 		Item.setText("map-SateD");
-		Item.setData("action", MyListener.ACTION_NEWSAT);
-		Item.addSelectionListener(myListener);
+		Item.setData("action", MySelListener.ACTION_NEWSAT);
+		Item.addSelectionListener(mySelListener);
 		
 		Item = new MenuItem(Menu, SWT.SEPARATOR);
 		
 		Item = new MenuItem(Menu, SWT.NONE);
 		Item.setText("&Open...\tCtrl+O");
-		Item.setData("action", MyListener.ACTION_OPEN);
+		Item.setData("action", MySelListener.ACTION_OPEN);
 		Item.setAccelerator(SWT.CTRL + 'O');
-		Item.addSelectionListener(myListener);
+		Item.addSelectionListener(mySelListener);
 
 		Item = new MenuItem(Menu, SWT.NONE);
 		Item.setText("&Save\tCtrl+S");
-		Item.setData("action", MyListener.ACTION_SAVE);
+		Item.setData("action", MySelListener.ACTION_SAVE);
 		Item.setAccelerator(SWT.CTRL + 'S');
-		Item.addSelectionListener(myListener);
+		Item.addSelectionListener(mySelListener);
 		
 		Item = new MenuItem(Menu, SWT.NONE);
 		Item.setText("Save As...");
-		Item.setData("action", MyListener.ACTION_SAVEAS);
-		Item.addSelectionListener(myListener);
+		Item.setData("action", MySelListener.ACTION_SAVEAS);
+		Item.addSelectionListener(mySelListener);
 		
 		Item = new MenuItem(Menu, SWT.SEPARATOR);
 		
@@ -175,111 +184,126 @@ public class Main {
 		MenuBar.setText("&Edit");
 		
 		Menu = new Menu(MenuBar);
+		Menu.addListener(SWT.Show, myListener);
 		MenuBar.setMenu(Menu);
 
 		Item = new MenuItem(Menu, SWT.NONE);
 		Item.setText("Add new Channel...\tCtrl+N");
-		Item.setData("action", MyListener.ACTION_ADDCHAN);
+		Item.setData("action", MySelListener.ACTION_ADDCHAN);
 		Item.setAccelerator(SWT.CTRL + 'N');
-		Item.addSelectionListener(myListener);
+		Item.addSelectionListener(mySelListener);
 
 		Item = new MenuItem(Menu, SWT.SEPARATOR);
 		
 		Item = new MenuItem(Menu, SWT.NONE);
 		Item.setText("Edit Channel...\tCtrl+E");
-		Item.setData("action", MyListener.ACTION_EDITCHAN);
+		Item.setData("action", MySelListener.ACTION_EDITCHAN);
 		Item.setAccelerator(SWT.CTRL + 'E');
-		Item.addSelectionListener(myListener);
+		Item.addSelectionListener(mySelListener);
 		
 		Item = new MenuItem(Menu, SWT.NONE);
 		Item.setText("Move Channel(s)...\tCtrl+M");
-		Item.setData("action", MyListener.ACTION_MOVECHAN);
+		Item.setData("action", MySelListener.ACTION_MOVECHAN);
 		Item.setAccelerator(SWT.CTRL + 'M');
-		Item.addSelectionListener(myListener);
+		Item.addSelectionListener(mySelListener);
 		
 		Item = new MenuItem(Menu, SWT.NONE);
 		Item.setText("Delete Channel(s)\tDel");
-		Item.setData("action", MyListener.ACTION_DELETE);
+		Item.setData("action", MySelListener.ACTION_DELETE);
 		Item.setAccelerator(SWT.DEL);
-		Item.addSelectionListener(myListener);
+		Item.addSelectionListener(mySelListener);
 		
 		Item = new MenuItem(Menu, SWT.SEPARATOR);
 		
 		Item = new MenuItem(Menu, SWT.NONE);
 		Item.setText("Find Channel...\tCtrl+F");
-		Item.setData("action", MyListener.ACTION_FINDCHAN);
+		Item.setData("action", MySelListener.ACTION_FINDCHAN);
 		Item.setAccelerator(SWT.CTRL + 'F');
-		Item.addSelectionListener(myListener);
+		Item.addSelectionListener(mySelListener);
 		
 		Item = new MenuItem(Menu, SWT.SEPARATOR);
 		
 		Item = new MenuItem(Menu, SWT.NONE);
 		Item.setText("Add to favourites\tCtrl+Up");
-		Item.setData("action", MyListener.ACTION_FAVADD);
+		Item.setData("action", MySelListener.ACTION_FAVADD);
 		Item.setAccelerator(SWT.CTRL + SWT.ARROW_UP);
-		Item.addSelectionListener(myListener);
+		Item.addSelectionListener(mySelListener);
 		
 		Item = new MenuItem(Menu, SWT.NONE);
 		Item.setText("Remove from favourites\tCtrl+Down");
-		Item.setData("action", MyListener.ACTION_FAVDEL);
+		Item.setData("action", MySelListener.ACTION_FAVDEL);
 		Item.setAccelerator(SWT.CTRL + SWT.ARROW_DOWN);
-		Item.addSelectionListener(myListener);
+		Item.addSelectionListener(mySelListener);
 		
 		Item = new MenuItem(Menu, SWT.SEPARATOR);
 
 		Item = new MenuItem(Menu, SWT.NONE);
 		Item.setText("Add parental lock\tCtrl+Alt+Up");
-		Item.setData("action", MyListener.ACTION_LOCKADD);
+		Item.setData("action", MySelListener.ACTION_LOCKADD);
 		Item.setAccelerator(SWT.CTRL + SWT.ALT + SWT.ARROW_UP);
-		Item.addSelectionListener(myListener);
+		Item.addSelectionListener(mySelListener);
 		
 		Item = new MenuItem(Menu, SWT.NONE);
 		Item.setText("Remove parental lock\tCtrl+Alt+Down");
-		Item.setData("action", MyListener.ACTION_LOCKDEL);
+		Item.setData("action", MySelListener.ACTION_LOCKDEL);
 		Item.setAccelerator(SWT.CTRL + SWT.ALT + SWT.ARROW_DOWN);
-		Item.addSelectionListener(myListener);
+		Item.addSelectionListener(mySelListener);
 		
 		Item = new MenuItem(Menu, SWT.SEPARATOR);
 		
 		Item = new MenuItem(Menu, SWT.NONE);
 		Item.setText("Add Sky.de Feed Channels");
-		Item.setData("action", MyListener.ACTION_SKY);
-		Item.addSelectionListener(myListener);
+		Item.setData("action", MySelListener.ACTION_SKY);
+		Item.addSelectionListener(mySelListener);
 
 		MenuBar = new MenuItem(mbar, SWT.CASCADE);
 		MenuBar.setText("&Fav79");
+
+		Menu = new Menu(MenuBar);
+		Menu.addListener(SWT.Show, myListener);
+		MenuBar.setMenu(Menu);
+		
+		Item = new MenuItem(Menu, SWT.NONE);
+		Item.setText("Toggle List 1\tCtrl+Shift+1");
+		Item.setData("action", MySelListener.ACTION_FAV79_1);
+		Item.setAccelerator(SWT.CTRL + SWT.SHIFT + '1');
+		Item.addSelectionListener(mySelListener);
+		
+		Item = new MenuItem(Menu, SWT.NONE);
+		Item.setText("Toggle List 2\tCtrl+Shift+2");
+		Item.setData("action", MySelListener.ACTION_FAV79_2);
+		Item.setAccelerator(SWT.CTRL + SWT.SHIFT + '2');
+		Item.addSelectionListener(mySelListener);
+		
+		Item = new MenuItem(Menu, SWT.NONE);
+		Item.setText("Toggle List 3\tCtrl+Shift+3");
+		Item.setData("action", MySelListener.ACTION_FAV79_3);
+		Item.setAccelerator(SWT.CTRL + SWT.SHIFT + '3');
+		Item.addSelectionListener(mySelListener);
+		
+		Item = new MenuItem(Menu, SWT.NONE);
+		Item.setText("Toggle List 4\tCtrl+Shift+4");
+		Item.setData("action", MySelListener.ACTION_FAV79_4);
+		Item.setAccelerator(SWT.CTRL + SWT.SHIFT + '4');
+		Item.addSelectionListener(mySelListener);
+		
+		MenuBar = new MenuItem(mbar, SWT.CASCADE);
+		MenuBar.setText("&Help");
 		
 		Menu = new Menu(MenuBar);
 		MenuBar.setMenu(Menu);
 		
 		Item = new MenuItem(Menu, SWT.NONE);
-		Item.setText("Toggle List 1\tCtrl+Shift+1");
-		Item.setData("action", MyListener.ACTION_FAV79_1);
-		Item.setAccelerator(SWT.CTRL + SWT.SHIFT + '1');
-		Item.addSelectionListener(myListener);
+		Item.setText("Online Help");
+		Item.setData("action", MySelListener.ACTION_WWW);
+		Item.addSelectionListener(mySelListener);
+		
+		Item = new MenuItem(Menu, SWT.SEPARATOR);
 		
 		Item = new MenuItem(Menu, SWT.NONE);
-		Item.setText("Toggle List 2\tCtrl+Shift+2");
-		Item.setData("action", MyListener.ACTION_FAV79_2);
-		Item.setAccelerator(SWT.CTRL + SWT.SHIFT + '2');
-		Item.addSelectionListener(myListener);
-		
-		Item = new MenuItem(Menu, SWT.NONE);
-		Item.setText("Toggle List 3\tCtrl+Shift+3");
-		Item.setData("action", MyListener.ACTION_FAV79_3);
-		Item.setAccelerator(SWT.CTRL + SWT.SHIFT + '3');
-		Item.addSelectionListener(myListener);
-		
-		Item = new MenuItem(Menu, SWT.NONE);
-		Item.setText("Toggle List 4\tCtrl+Shift+4");
-		Item.setData("action", MyListener.ACTION_FAV79_4);
-		Item.setAccelerator(SWT.CTRL + SWT.SHIFT + '4');
-		Item.addSelectionListener(myListener);
-		
-		Item = new MenuItem(mbar, SWT.NONE);
 		Item.setText("About");
-		Item.setData("action", MyListener.ACTION_ABOUT);
-		Item.addSelectionListener(myListener);
+		Item.setData("action", MySelListener.ACTION_ABOUT);
+		Item.addSelectionListener(mySelListener);
 	}
 
 	private static void createTable() {
@@ -362,6 +386,7 @@ public class Main {
 					Channel targetChan = (Channel) item.getData();
 					
 					moveChannels(selected, targetChan);
+					refresh(false);
 				}
 			}
 		});
@@ -451,6 +476,34 @@ public class Main {
 		}
 	}
 
+	public static void createColumnsClone() {
+		TableColumn[] col = new TableColumn[12];
+		String[] colNames = {"No.", "Name", "Freq", "Nid",
+				"Onid", "Tsid", "Sid", "Pid", "Vpid",
+				"Typ", "Fav", "Enc"};
+		int[] colWidth = {40, 175, 40, 45,
+				45, 45, 45, 45, 45,
+				45, 40, 40};
+		int[] colAlign = {SWT.RIGHT, SWT.LEFT, SWT.CENTER, SWT.CENTER,
+				SWT.CENTER, SWT.CENTER, SWT.CENTER, SWT.CENTER, SWT.CENTER,
+				SWT.CENTER, SWT.CENTER, SWT.CENTER};
+		int text = SortListenerFactory.TYPE_TEXT;
+		int integer = SortListenerFactory.TYPE_INTEGER;
+		int[] colType = {integer, text, integer, integer,
+				integer, integer, integer, integer, integer,
+				text, text, text};
+		
+		for(int c = 0; c < col.length; c++) {
+			col[c] = new TableColumn(table, SWT.CENTER);
+			col[c].setText(colNames[c]);
+			col[c].setWidth(colWidth[c]);
+			col[c].setAlignment(colAlign[c]);
+			col[c].setResizable(true);
+			col[c].setData("type", colType[c]);
+			col[c].addListener(SWT.Selection, SortListenerFactory.getListener());
+		}
+	}
+	
 	public static void deleteColumns() {
 		TableColumn[] columns = table.getColumns();
 		for(int i = 0; i < columns.length; i++)
@@ -477,6 +530,9 @@ public class Main {
 				break;
 			case Channel.TYPE_SAT:
 				fillSat();
+				break;
+			case Channel.TYPE_CLONE:
+				fillClone();
 				break;
 		}
 		
@@ -610,7 +666,42 @@ public class Main {
 			t.setData(c);
 		}
 	}
-		
+
+	public static void fillClone() {
+		modeLabel.setText("Mode: CLONE.BIN");
+		/* print out our channels */
+		Iterator<Channel> it = channelList.values().iterator();
+		while(it.hasNext()) {
+			CloneChannel c = (CloneChannel)it.next();
+			
+			/* new item */
+			TableItem t = new TableItem(table, SWT.LEFT);
+			
+			String typ;
+			switch(c.stype) {
+				case Channel.STYPE_TV:		typ = "TV";		break;
+				case Channel.STYPE_RADIO:	typ = "Radio";	break;
+				case Channel.STYPE_DATA:	typ = "Data";	break;
+				case Channel.STYPE_HD:		typ = "HD";		break;
+				default:					typ = "? ("+c.stype+")";		break;
+			}
+			
+			String fav	= ((c.fav & Channel.FLAG_FAV_1)!=0) ? "yes" : "no";
+			String enc	= ((c.enc & CloneChannel.FLAG_SCRAMBLED)!=0) ? "yes" : "no"; 
+			
+			//System.out.println(c.flags);
+			/* build text and asign it */
+			String[] col = new String[] { c.num+"", c.name, c.freq+"", c.nid+"",
+					c.onid+"", c.tsid+"", c.sid+"",  c.mpid+"",  c.vpid+"",
+					typ, fav, enc
+			};
+			t.setText(col);
+			
+			/* assign a reference to the Channel object, so we can do  drag n drop */
+			t.setData(c);
+		}
+	}
+	
 	public static void moveChannels(Channel[] selected, Channel targetChan) {
 		int cIndex = targetChan.num;
 		
@@ -647,8 +738,6 @@ public class Main {
 				channelList.put(c.num, c);
 			}
 		}
-		
-		refresh(false);
 	}
 	
 	static Channel[] getSelected() {
@@ -674,12 +763,11 @@ public class Main {
 				j++;
 			}
 		}
-		Main.refresh();
 	}
 }
 
 /* assign actions to our menubar */
-class MyListener implements SelectionListener {
+class MySelListener implements SelectionListener {
 	public static final int ACTION_NEWAIR   = 0;
 	public static final int ACTION_NEWCABLE = 1;
 	public static final int ACTION_NEWSAT   = 2;
@@ -700,10 +788,11 @@ class MyListener implements SelectionListener {
 	public static final int ACTION_FAV79_2	= 65;
 	public static final int ACTION_FAV79_3	= 66;
 	public static final int ACTION_FAV79_4	= 67;
-	public static final int ACTION_ABOUT    = 128;
+	public static final int ACTION_WWW		= 128;
+	public static final int ACTION_ABOUT    = 129;
 	
 	private Shell shell;
-	MyListener(Shell shell) {
+	MySelListener(Shell shell) {
 		super();
 		this.shell = shell;
 	}
@@ -719,23 +808,23 @@ class MyListener implements SelectionListener {
 			
 			switch(action) {
 				case ACTION_NEWAIR:
+					Main.mapType = Channel.TYPE_AIR;
 					Main.channelList.clear();
 					Main.refresh();
-					Main.mapType = Channel.TYPE_AIR;
 					Main.deleteColumns();
 					Main.createColumnsAir();
 					break;
 				case ACTION_NEWCABLE:
+					Main.mapType = Channel.TYPE_CABLE;
 					Main.channelList.clear();
 					Main.refresh();
-					Main.mapType = Channel.TYPE_CABLE;
 					Main.deleteColumns();
 					Main.createColumnsCable();
 					break;
 				case ACTION_NEWSAT:
+					Main.mapType = Channel.TYPE_SAT;
 					Main.channelList.clear();
 					Main.refresh();
-					Main.mapType = Channel.TYPE_SAT;
 					Main.deleteColumns();
 					Main.createColumnsSat();
 					break;
@@ -788,8 +877,10 @@ class MyListener implements SelectionListener {
 				case ACTION_ADDCHAN:
 					switch(Main.mapType) {
 						case Channel.TYPE_CABLE:
-						case Channel.TYPE_AIR:
 							new Edit(new AirCableChannel());
+							break;
+						case Channel.TYPE_AIR:
+							new Edit(new AirChannel());
 							break;
 						case Channel.TYPE_SAT:
 							new Edit(new SatChannel());
@@ -809,6 +900,7 @@ class MyListener implements SelectionListener {
 					return;
 				case ACTION_DELETE:
 					Main.deleteChannels(Main.getSelected());
+					Main.refresh(false);
 					return;
 				case ACTION_FINDCHAN:
 					new Find();
@@ -865,6 +957,15 @@ class MyListener implements SelectionListener {
 						fav794[i].fav79 ^= Channel.FLAG_FAV_4;
 					Main.refresh();
 					return;
+				case ACTION_WWW:
+					try {
+						java.awt.Desktop.getDesktop().browse(new URI("http://www.polskafan.de/samsung/documentation"));
+					} catch (IOException ex) {
+						ex.printStackTrace();
+					} catch (URISyntaxException ex) {
+						ex.printStackTrace();
+					}
+					return;
 				case ACTION_ABOUT:
 					new About();
 					return;
@@ -873,6 +974,57 @@ class MyListener implements SelectionListener {
 			}
 		}
 	}
+}
+
+class MyListener implements Listener {
+    public void handleEvent(Event event) {
+    	MenuItem[] menuItems = ((Menu)event.widget).getItems();
+		for(int i = 0; i<menuItems.length; i++) {
+			try {
+				int favaction = (Integer)menuItems[i].getData("action");
+				switch(favaction) {
+					case MySelListener.ACTION_SAVE:
+						if(Main.filepath != null && Main.filepath.length() > 0)
+							menuItems[i].setEnabled(true);
+						else
+							menuItems[i].setEnabled(false);
+						break;
+					case MySelListener.ACTION_EDITCHAN:
+					case MySelListener.ACTION_MOVECHAN:
+					case MySelListener.ACTION_DELETE:
+					case MySelListener.ACTION_FAVADD:
+					case MySelListener.ACTION_FAVDEL:
+						if(Main.getSelected().length > 0) {
+							menuItems[i].setEnabled(true);
+						} else {
+							menuItems[i].setEnabled(false);
+						}
+						break;
+					case MySelListener.ACTION_LOCKADD:
+					case MySelListener.ACTION_LOCKDEL:
+						if(Main.getSelected().length > 0 &&
+								(Main.mapType & (Channel.TYPE_AIR|Channel.TYPE_CABLE)) != 0) {
+							menuItems[i].setEnabled(true);
+						} else {
+							menuItems[i].setEnabled(false);
+						}
+						break;
+					case MySelListener.ACTION_FAV79_1:
+					case MySelListener.ACTION_FAV79_2:
+					case MySelListener.ACTION_FAV79_3:
+					case MySelListener.ACTION_FAV79_4:
+						if(Main.getSelected().length > 0 &&
+								(Main.mapType & (Channel.TYPE_AIR|Channel.TYPE_CABLE|Channel.TYPE_SAT)) != 0)
+							menuItems[i].setEnabled(true);
+						else
+							menuItems[i].setEnabled(false);
+						break;
+				}
+			} catch (NullPointerException e) {
+				continue;
+			}
+		}
+    }		
 }
 
 /* user wants to sort the table, do him the favour */

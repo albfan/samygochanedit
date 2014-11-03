@@ -1,6 +1,6 @@
 /**
  * @author polskafan <polska at polskafan.de>
- * @version 0.40
+ * @version 0.42
   
 	Copyright 2009 by Timo Dobbrick
 	For more information see http://www.polskafan.de/samsung
@@ -43,6 +43,7 @@ import org.eclipse.swt.widgets.Text;
 
 import samyedit.AirCableChannel;
 import samyedit.Channel;
+import samyedit.CloneChannel;
 import samyedit.SatChannel;
 
 public class Edit {
@@ -147,11 +148,21 @@ public class Edit {
 		g = new Group(dialog, SWT.CENTER);
 		g.setText("Misc");
 		g.setLayout(new RowLayout());
-		r_misc[0] = new Button(g, SWT.CHECK);
-		r_misc[0].setText("Encrypted");
-		if((channel.enc & Channel.FLAG_SCRAMBLED)!=0) r_misc[0].setSelection(true);
-		r_misc[1] = new Button(g, SWT.CHECK);
-		r_misc[1].setText("Locked");
+		if((Main.mapType & (Channel.TYPE_CLONE))!=0) {
+			r_misc[0] = new Button(g, SWT.CHECK);
+			r_misc[0].setText("Encrypted");
+			if((channel.enc & CloneChannel.FLAG_SCRAMBLED)!=0) r_misc[0].setSelection(true);
+		} else {
+			r_misc[0] = new Button(g, SWT.CHECK);
+			r_misc[0].setText("Encrypted");
+			if((channel.enc & Channel.FLAG_SCRAMBLED)!=0) r_misc[0].setSelection(true);
+		}
+		
+		if((Main.mapType & (Channel.TYPE_AIR|Channel.TYPE_CABLE|Channel.TYPE_SAT))!=0) {
+			r_misc[1] = new Button(g, SWT.CHECK);
+			r_misc[1].setText("Locked");
+		}
+		
 		if((channel.lock & Channel.FLAG_LOCK)!=0) r_misc[1].setSelection(true);
 		r_misc[2] = new Button(g, SWT.CHECK);
 		r_misc[2].setText("Favourite");
@@ -160,23 +171,25 @@ public class Edit {
 		g.setLayoutData(gridData);
 		g.pack();
 		
-		g = new Group(dialog, SWT.CENTER);
-		g.setText("Favourites (x79)");
-		g.setLayout(new RowLayout());
-		r_fav79[0] = new Button(g, SWT.CHECK);
-		r_fav79[0].setText("Fav1");
-		if((channel.fav79 & Channel.FLAG_FAV_1)!=0) r_fav79[0].setSelection(true);
-		r_fav79[1] = new Button(g, SWT.CHECK);
-		r_fav79[1].setText("Fav2");
-		if((channel.fav79 & Channel.FLAG_FAV_2)!=0) r_fav79[1].setSelection(true);
-		r_fav79[2] = new Button(g, SWT.CHECK);
-		r_fav79[2].setText("Fav3");
-		if((channel.fav79 & Channel.FLAG_FAV_3)!=0) r_fav79[2].setSelection(true);
-		r_fav79[3] = new Button(g, SWT.CHECK);
-		r_fav79[3].setText("Fav4");
-		if((channel.fav79 & Channel.FLAG_FAV_4)!=0) r_fav79[3].setSelection(true);		
-		g.setLayoutData(gridData);
-		g.pack();
+		if((Main.mapType & (Channel.TYPE_AIR|Channel.TYPE_CABLE|Channel.TYPE_SAT))!=0) {
+			g = new Group(dialog, SWT.CENTER);
+			g.setText("Favourites (x79)");
+			g.setLayout(new RowLayout());
+			r_fav79[0] = new Button(g, SWT.CHECK);
+			r_fav79[0].setText("Fav1");
+			if((channel.fav79 & Channel.FLAG_FAV_1)!=0) r_fav79[0].setSelection(true);
+			r_fav79[1] = new Button(g, SWT.CHECK);
+			r_fav79[1].setText("Fav2");
+			if((channel.fav79 & Channel.FLAG_FAV_2)!=0) r_fav79[1].setSelection(true);
+			r_fav79[2] = new Button(g, SWT.CHECK);
+			r_fav79[2].setText("Fav3");
+			if((channel.fav79 & Channel.FLAG_FAV_3)!=0) r_fav79[2].setSelection(true);
+			r_fav79[3] = new Button(g, SWT.CHECK);
+			r_fav79[3].setText("Fav4");
+			if((channel.fav79 & Channel.FLAG_FAV_4)!=0) r_fav79[3].setSelection(true);		
+			g.setLayoutData(gridData);
+			g.pack();
+		}
 		
 		switch(Main.mapType) {
 			case Channel.TYPE_AIR:
@@ -338,40 +351,49 @@ class doEdit implements SelectionListener {
 		if(edit.r_stype[2].getSelection()) channel.stype = Channel.STYPE_DATA;
 		if(edit.r_stype[3].getSelection()) channel.stype = Channel.STYPE_HD;
 		
-		if(edit.r_misc[0].getSelection())
-			channel.enc |= Channel.FLAG_SCRAMBLED;
-		else
-			channel.enc &= ~Channel.FLAG_SCRAMBLED;
-		
-		if(edit.r_misc[1].getSelection())
-			channel.lock |= Channel.FLAG_LOCK;
-		else
-			channel.lock &= ~Channel.FLAG_LOCK;
+		if((Main.mapType & Channel.TYPE_CLONE) != 0) {
+			if(edit.r_misc[0].getSelection())
+				channel.enc |= CloneChannel.FLAG_SCRAMBLED;
+			else
+				channel.enc &= ~CloneChannel.FLAG_SCRAMBLED;
+		} else {
+			if(edit.r_misc[0].getSelection())
+				channel.enc |= Channel.FLAG_SCRAMBLED;
+			else
+				channel.enc &= ~Channel.FLAG_SCRAMBLED;
+		}
 		
 		if(edit.r_misc[2].getSelection())
 			channel.fav |= Channel.FLAG_FAV_1;
 		else
 			channel.fav &= ~Channel.FLAG_FAV_1;
 		
-		if(edit.r_fav79[0].getSelection())
-			channel.fav79 |= Channel.FLAG_FAV_1;
-		else
-			channel.fav79 &= ~Channel.FLAG_FAV_1;
-		
-		if(edit.r_fav79[1].getSelection())
-			channel.fav79 |= Channel.FLAG_FAV_2;
-		else
-			channel.fav79 &= ~Channel.FLAG_FAV_2;
-		
-		if(edit.r_fav79[2].getSelection())
-			channel.fav79 |= Channel.FLAG_FAV_3;
-		else
-			channel.fav79 &= ~Channel.FLAG_FAV_3;
-		
-		if(edit.r_fav79[3].getSelection())
-			channel.fav79 |= Channel.FLAG_FAV_4;
-		else
-			channel.fav79 &= ~Channel.FLAG_FAV_4;
+		if((Main.mapType & (Channel.TYPE_AIR|Channel.TYPE_CABLE|Channel.TYPE_SAT))!=0) {
+			if(edit.r_misc[1].getSelection())
+				channel.lock |= Channel.FLAG_LOCK;
+			else
+				channel.lock &= ~Channel.FLAG_LOCK;
+			
+			if(edit.r_fav79[0].getSelection())
+				channel.fav79 |= Channel.FLAG_FAV_1;
+			else
+				channel.fav79 &= ~Channel.FLAG_FAV_1;
+			
+			if(edit.r_fav79[1].getSelection())
+				channel.fav79 |= Channel.FLAG_FAV_2;
+			else
+				channel.fav79 &= ~Channel.FLAG_FAV_2;
+			
+			if(edit.r_fav79[2].getSelection())
+				channel.fav79 |= Channel.FLAG_FAV_3;
+			else
+				channel.fav79 &= ~Channel.FLAG_FAV_3;
+			
+			if(edit.r_fav79[3].getSelection())
+				channel.fav79 |= Channel.FLAG_FAV_4;
+			else
+				channel.fav79 &= ~Channel.FLAG_FAV_4;
+		}
 		
 		switch(Main.mapType) {
 			case Channel.TYPE_CABLE:
