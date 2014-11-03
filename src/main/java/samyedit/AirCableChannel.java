@@ -210,12 +210,12 @@ public class AirCableChannel extends Channel {
 	{
 		String fStr = s.substring(1);
 		int f = Integer.parseInt(fStr);
+		if ( s.startsWith("S") && f <   4) return this.freq = f +  192;
 		if ( s.startsWith("S") && f <  11) return this.freq = f -    4;
-		if ( s.startsWith("K") && f <  13) return this.freq = f +    2;
 		if ( s.startsWith("S") && f <  42) return this.freq = f +    4;
+		if ( s.startsWith("K") && f <  13) return this.freq = f +    2;
 		if ( s.startsWith("K") && f <  70) return this.freq = f +   25;
 		if ( s.startsWith("!") && f < 194) return this.freq = f +    0;
-		if ( s.startsWith("S") && f <   4) return this.freq = f +  192;
 		return this.freq = Integer.parseInt(s);
 	}
 }

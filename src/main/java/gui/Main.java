@@ -111,7 +111,7 @@ public class Main {
 	/** byte describing the smcFile Version: B-series / C-series / D-series */
 	static File currentDir = new File (".");
 	
-	static String version = "v0.53cd";
+	static String version = "v0.54cd";
 	static String series  = "C and D-Series";
 	
 	public static void main(String[] args) {
@@ -1015,6 +1015,7 @@ class MySelListener implements SelectionListener {
 	public static final int ACTION_FAV79_2	= 65;
 	public static final int ACTION_FAV79_3	= 66;
 	public static final int ACTION_FAV79_4	= 67;
+	
 	public static final int ACTION_WWW		= 127;
 	public static final int ACTION_FORUM	= 128;
 	public static final int ACTION_ABOUT    = 129;
@@ -1267,7 +1268,7 @@ class MySelListener implements SelectionListener {
 			}
 		}
 	}
-    /** File Dialog to select a file
+    /** File Dialog to select a file for reading
      * 
      * @param message displayed for selection
      * @param filter  file selection filters
@@ -1286,7 +1287,7 @@ class MySelListener implements SelectionListener {
     }
 
 
-    /** File Dialog to select a file
+    /** File Dialog to select a file for writing
      * 
      * @param message displayed for selection
      * @param filter  file selection filters

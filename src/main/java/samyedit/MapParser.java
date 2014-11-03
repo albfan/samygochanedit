@@ -314,83 +314,6 @@ public class MapParser {
 		return;
 	}
 	
-/*
- * 	public static void writeAirCable(String file, TreeMap<Integer, Channel> channelList) {
- *
-		Iterator<Channel> it = channelList.values().iterator();
-		File f = new File(file);
-		OutputStream outStream;
-		try {
-			outStream = new FileOutputStream(f);
-		} catch (FileNotFoundException e) {
-			new ErrorMessage("Cannot write to file:\n"+e.getMessage());
-			Main.statusLabel.setText("");
-			return;
-		}
-		
-		int entries = 0;
-		while(it.hasNext()) {
-			AirCableChannel chan = (AirCableChannel)it.next();
-			byte[] rawData = chan.rawData;
-			revertEndianess(rawData, iChanNo,   chan.num);
-			revertEndianess(rawData, iChanVpid, chan.vpid);
-			revertEndianess(rawData, iChanMpid, chan.mpid);
-			revertEndianess(rawData, iChanSid,  chan.sid);
-			rawData[ iChanFav]    = chan.fav;
-			rawData[ iChanQam]    = chan.qam;
-			rawData[ iChanStatus] = chan.status;
-			rawData[ iChanSType]  = chan.stype;
-			revertEndianess(rawData, iChanONid, chan.onid);
-			revertEndianess(rawData, iChanNid, chan.nid);
-			rawData[iChanEnc]     = chan.enc;
-			revertEndianess(rawData, iChanFreq, chan.freq);
-			revertEndianess(rawData, iChanSymbR, chan.symbr);
-			revertEndianess(rawData, iChanBouqet, chan.bouqet);
-			revertEndianess(rawData, iChanTSid, chan.tsid);
-			
-			char[] name = chan.name.toCharArray();
-			int n = 0;
-			for(; n<name.length;n++) {
-				rawData[iChanName+1+2*n] = (byte)name[n];
-			}
-			for(; n<lChanName;n++) {
-				rawData[iChanName+1+2*n] = (byte)0x00;
-			}
-			
-			rawData[iChanLock] = chan.lock;
-			rawData[iChanFav79] = chan.fav79;
-			rawData[iChanCRC] = 0; 				//CheckSum
-			for(int i = 0; i<iChanCRC; i++) {	//calculate the CheckSum
-				rawData[iChanCRC] += rawData[i];
-			}
-			
-			try {
-				outStream.write(rawData);
-			} catch (IOException e) {
-				e.printStackTrace();
-				return;
-			}
-			entries++;
-		}
-		
-		// fill with null bytes until we reach a multiple of 1000 channels 
-		while(entries % 1000 != 0) {
-			byte[] rawData = new byte[lChan];
-			try {
-				outStream.write(rawData);
-			} catch (IOException e) {
-				e.printStackTrace();
-				return;
-			}
-			entries++;
-		}
-		
-		// write the file out 
-		Main.statusLabel.setText("Channel list written to file: "+file);
-		return;
-	}
-*/
-	
 	public static void writeAirCable(String file, TreeMap<Integer, Channel> channelList) {
 		Iterator<Channel> it = channelList.values().iterator();
 		File f = new File(file);
@@ -432,7 +355,7 @@ public class MapParser {
 			}
 			entries++;
 		}
-		
+/*TODO test if fillup to 1000 records is still neded */		
 		/* fill with null bytes until we reach a multiple of 1000 entries */
 		byte[] rawData = new byte[recordLen];
 		while(entries % 1000 != 0) {
