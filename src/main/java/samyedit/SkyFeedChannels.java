@@ -1,6 +1,6 @@
 /**
  * @author polskafan <polska at polskafan.de>
- * @version 0.31
+ * @version 0.40
   
 	Copyright 2009 by Timo Dobbrick
 	For more information see http://www.polskafan.de/samsung
@@ -117,7 +117,9 @@ public class SkyFeedChannels {
 		c.mpid   = 0xFFFF;
 		c.vpid   = 0xFFFF;
 		c.stype  = Channel.STYPE_TV;
-		c.enc |= Channel.FLAG_SCRAMBLED;
+		c.enc	|= Channel.FLAG_SCRAMBLED;
+		c.fav	&= ~Channel.FLAG_FAV_1;
+		c.fav79 &= ~(Channel.FLAG_FAV_1|Channel.FLAG_FAV_2|Channel.FLAG_FAV_3|Channel.FLAG_FAV_4);
 		channelList.put(c.num, c);
 	}
 }

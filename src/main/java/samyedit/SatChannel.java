@@ -22,35 +22,11 @@
 
  */
 
-package gui;
+package samyedit;
 
-import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.events.SelectionListener;
-import org.eclipse.swt.widgets.Shell;
-
-public class Exit implements SelectionListener {
-	Shell shell;
-	public Exit(Shell shell) {
-		this.shell = shell;
-	}
-
-	public void widgetDefaultSelected(SelectionEvent arg0) {
-		/* close current window, if it is the main window
-		 * return to system
-		 */
-		if(shell == Main.shell) 
-			System.exit(0);
-
-		shell.dispose();
-	}
-
-	public void widgetSelected(SelectionEvent arg0) {
-		/* close current window, if it is the main window
-		 * return to system
-		 */
-		if(shell == Main.shell) 
-			System.exit(0);
-
-		shell.dispose();
-	}
+public class SatChannel extends Channel {
+	public byte[] rawData = new byte[144];
+	
+	public int tpid		= -1;
+	public int sat		= -1;
 }

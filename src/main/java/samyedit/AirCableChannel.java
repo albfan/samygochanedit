@@ -22,35 +22,19 @@
 
  */
 
-package gui;
+package samyedit;
 
-import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.events.SelectionListener;
-import org.eclipse.swt.widgets.Shell;
+public class AirCableChannel extends Channel {
+	public byte[] rawData = new byte[248];
+	
+	public static final byte QAM64	= 0x41;
+	public static final byte QAM256	= 0x42;
+	
+	public byte qam		= QAM64;
+	
+	public int nid		= -1;
+	public int freq		= -1;
+	public int symbr	= -1;
 
-public class Exit implements SelectionListener {
-	Shell shell;
-	public Exit(Shell shell) {
-		this.shell = shell;
-	}
-
-	public void widgetDefaultSelected(SelectionEvent arg0) {
-		/* close current window, if it is the main window
-		 * return to system
-		 */
-		if(shell == Main.shell) 
-			System.exit(0);
-
-		shell.dispose();
-	}
-
-	public void widgetSelected(SelectionEvent arg0) {
-		/* close current window, if it is the main window
-		 * return to system
-		 */
-		if(shell == Main.shell) 
-			System.exit(0);
-
-		shell.dispose();
-	}
+	public int lcn		= -1;
 }

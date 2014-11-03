@@ -1,6 +1,6 @@
 /**
  * @author polskafan <polska at polskafan.de>
- * @version 0.31
+ * @version 0.40
   
 	Copyright 2009 by Timo Dobbrick
 	For more information see http://www.polskafan.de/samsung
@@ -56,43 +56,55 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 
+import samyedit.AirCableChannel;
 import samyedit.Channel;
 import samyedit.MapParser;
+import samyedit.SatChannel;
 import samyedit.SkyFeedChannels;
 
 public class Main {
 	
 	static Display display;
 	static Shell shell;
-	static Table table;
+	public static Table table;
 	public static Label statusLabel;
+	public static Label modeLabel;
+	public static byte mapType = 0x01;
 	
 	static TreeMap<Integer, Channel> channelList = new TreeMap<Integer, Channel>();
 	static String filepath;
 	
-	static String version = "v0.31";
+	static String version = "v0.40";
 	
 	public static void main(String[] args) {
 		display = new Display();
 		shell = new Shell(display,  SWT.SHELL_TRIM);
-		shell.setSize(780, 500);
+		shell.setSize(820, 500);
 		shell.setText("SamyGO Channel Editor "+version);
 		
 		GridLayout layout = new GridLayout();
 		layout.verticalSpacing = 0;
+		layout.horizontalSpacing = 0;
 		layout.marginHeight = 0;
 		layout.marginWidth = 0;
-		layout.numColumns = 1;
+		layout.numColumns = 2;
 		shell.setLayout(layout);
 		
 		createMenuBar();
+		
 		createTable();
-		table.setLayoutData(new GridData(GridData.FILL_BOTH));
+		GridData twoColumn = new GridData(GridData.FILL_BOTH);
+		twoColumn.horizontalSpan = 2;
+		table.setLayoutData(twoColumn);
 		
 		statusLabel = new Label(shell, SWT.BORDER);
 		statusLabel.setText("Ready.");
 		statusLabel.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		
+		modeLabel = new Label(shell, SWT.RIGHT | SWT.BORDER);
+		modeLabel.setText("Mode: map-CableD");
+		modeLabel.setLayoutData(new GridData());	
+		modeLabel.pack();
 		refresh();
 		shell.open();
 		
@@ -113,7 +125,30 @@ public class Main {
 		Menu Menu = new Menu(MenuBar);
 		MenuBar.setMenu(Menu);
 		
-		MenuItem Item = new MenuItem(Menu, SWT.NONE);
+		MenuItem Item = new MenuItem(Menu, SWT.CASCADE);
+		Item.setText("New");
+
+		Menu subMenu = new Menu(Item);
+		Item.setMenu(subMenu);
+
+		Item = new MenuItem(subMenu, SWT.NONE);
+		Item.setText("map-AirD");
+		Item.setData("action", MyListener.ACTION_NEWAIR);
+		Item.addSelectionListener(myListener);
+		
+		Item = new MenuItem(subMenu, SWT.NONE);
+		Item.setText("map-CableD");
+		Item.setData("action", MyListener.ACTION_NEWCABLE);
+		Item.addSelectionListener(myListener);
+		
+		Item = new MenuItem(subMenu, SWT.NONE);
+		Item.setText("map-SateD");
+		Item.setData("action", MyListener.ACTION_NEWSAT);
+		Item.addSelectionListener(myListener);
+		
+		Item = new MenuItem(Menu, SWT.SEPARATOR);
+		
+		Item = new MenuItem(Menu, SWT.NONE);
 		Item.setText("&Open...\tCtrl+O");
 		Item.setData("action", MyListener.ACTION_OPEN);
 		Item.setAccelerator(SWT.CTRL + 'O');
@@ -210,8 +245,38 @@ public class Main {
 		Item.setText("Add Sky.de Feed Channels");
 		Item.setData("action", MyListener.ACTION_SKY);
 		Item.addSelectionListener(myListener);
+
+		MenuBar = new MenuItem(mbar, SWT.CASCADE);
+		MenuBar.setText("&Fav79");
 		
-		Item = new MenuItem(mbar, SWT.CASCADE);
+		Menu = new Menu(MenuBar);
+		MenuBar.setMenu(Menu);
+		
+		Item = new MenuItem(Menu, SWT.NONE);
+		Item.setText("Toggle List 1\tCtrl+Shift+1");
+		Item.setData("action", MyListener.ACTION_FAV79_1);
+		Item.setAccelerator(SWT.CTRL + SWT.SHIFT + '1');
+		Item.addSelectionListener(myListener);
+		
+		Item = new MenuItem(Menu, SWT.NONE);
+		Item.setText("Toggle List 2\tCtrl+Shift+2");
+		Item.setData("action", MyListener.ACTION_FAV79_2);
+		Item.setAccelerator(SWT.CTRL + SWT.SHIFT + '2');
+		Item.addSelectionListener(myListener);
+		
+		Item = new MenuItem(Menu, SWT.NONE);
+		Item.setText("Toggle List 3\tCtrl+Shift+3");
+		Item.setData("action", MyListener.ACTION_FAV79_3);
+		Item.setAccelerator(SWT.CTRL + SWT.SHIFT + '3');
+		Item.addSelectionListener(myListener);
+		
+		Item = new MenuItem(Menu, SWT.NONE);
+		Item.setText("Toggle List 4\tCtrl+Shift+4");
+		Item.setData("action", MyListener.ACTION_FAV79_4);
+		Item.setAccelerator(SWT.CTRL + SWT.SHIFT + '4');
+		Item.addSelectionListener(myListener);
+		
+		Item = new MenuItem(mbar, SWT.NONE);
 		Item.setText("About");
 		Item.setData("action", MyListener.ACTION_ABOUT);
 		Item.addSelectionListener(myListener);
@@ -219,31 +284,11 @@ public class Main {
 
 	private static void createTable() {
 		table = new Table(shell, SWT.MULTI | SWT.FULL_SELECTION | SWT.BORDER);
-
 		table.setHeaderVisible(true);
 		table.setLinesVisible(true);
 		
-		/* build main table */
-		TableColumn[] col = new TableColumn[14];
-		String[] colNames = {"No.", "Name", "Frq", "SR", "Nid",
-				"Onid", "Tsid", "Sid", "Pid", "Vpid",
-				"Typ", "Fav", "Enc", "Lock"};
-		int[] colWidth = {40, 180, 40, 45, 45,
-				45, 45, 45, 45, 45,
-				40, 40, 40, 40};
-		int[] colAlign = {SWT.RIGHT, SWT.LEFT, SWT.CENTER, SWT.CENTER, SWT.CENTER,
-				SWT.CENTER, SWT.CENTER, SWT.CENTER, SWT.CENTER, SWT.CENTER,
-				SWT.CENTER, SWT.CENTER, SWT.CENTER, SWT.CENTER};
-		
-		for(int c = 0; c < col.length; c++) {
-			col[c] = new TableColumn(table, SWT.CENTER);
-			col[c].setText(colNames[c]);
-			col[c].setWidth(colWidth[c]);
-			col[c].setAlignment(colAlign[c]);
-			col[c].setResizable(true);
-			col[c].addListener(SWT.Selection, SortListenerFactory.getListener());
-		}
-		
+		createColumnsCable();
+
 		/* enable double clicking to edit a channel */
 		table.addSelectionListener(new SelectionListener() {
 		    public void widgetDefaultSelected(SelectionEvent arg0) {
@@ -322,19 +367,136 @@ public class Main {
 		});
 	}
 
-	public static void refresh() {
-		/* save the view to restore it */
-		int topIndex = table.getTopIndex();
+	public static void createColumnsCable() {
+		TableColumn[] col = new TableColumn[15];
+		String[] colNames = {"No.", "Name", "Freq", "SR", "Nid",
+				"Onid", "Tsid", "Sid", "Pid", "Vpid",
+				"Typ", "Fav", "Fav79", "Enc", "Lock"};
+		int[] colWidth = {40, 175, 40, 45, 45,
+				45, 45, 45, 45, 45,
+				45, 40, 50, 40, 40};
+		int[] colAlign = {SWT.RIGHT, SWT.LEFT, SWT.CENTER, SWT.CENTER, SWT.CENTER,
+				SWT.CENTER, SWT.CENTER, SWT.CENTER, SWT.CENTER, SWT.CENTER,
+				SWT.CENTER, SWT.CENTER, SWT.CENTER, SWT.CENTER, SWT.CENTER};
+		int text = SortListenerFactory.TYPE_TEXT;
+		int integer = SortListenerFactory.TYPE_INTEGER;
+		int[] colType = {integer, text, integer, integer, integer,
+				integer, integer, integer, integer, integer,
+				text, text, text, text, text};
+		
+		for(int c = 0; c < col.length; c++) {
+			col[c] = new TableColumn(table, SWT.CENTER);
+			col[c].setText(colNames[c]);
+			col[c].setWidth(colWidth[c]);
+			col[c].setAlignment(colAlign[c]);
+			col[c].setResizable(true);
+			col[c].setData("type", colType[c]);
+			col[c].addListener(SWT.Selection, SortListenerFactory.getListener());
+		}
+	}
+
+	public static void createColumnsAir() {
+		TableColumn[] col = new TableColumn[14];
+		String[] colNames = {"No.", "Name", "Freq", "LCN",
+				"Onid", "Tsid", "Sid", "Pid", "Vpid",
+				"Typ", "Fav", "Fav79", "Enc", "Lock"};
+		int[] colWidth = {40, 175, 40, 40,
+				45, 45, 45, 45, 45,
+				45, 40, 50, 40, 40};
+		int[] colAlign = {SWT.RIGHT, SWT.LEFT, SWT.CENTER, SWT.CENTER,
+				SWT.CENTER, SWT.CENTER, SWT.CENTER, SWT.CENTER, SWT.CENTER,
+				SWT.CENTER, SWT.CENTER, SWT.CENTER, SWT.CENTER, SWT.CENTER};
+		int text = SortListenerFactory.TYPE_TEXT;
+		int integer = SortListenerFactory.TYPE_INTEGER;
+		int[] colType = {integer, text, integer, integer,
+				integer, integer, integer, integer, integer,
+				text, text, text, text, text};
+		
+		for(int c = 0; c < col.length; c++) {
+			col[c] = new TableColumn(table, SWT.CENTER);
+			col[c].setText(colNames[c]);
+			col[c].setWidth(colWidth[c]);
+			col[c].setAlignment(colAlign[c]);
+			col[c].setResizable(true);
+			col[c].setData("type", colType[c]);
+			col[c].addListener(SWT.Selection, SortListenerFactory.getListener());
+		}
+	}
+	
+	public static void createColumnsSat() {
+		TableColumn[] col = new TableColumn[12];
+		String[] colNames = {"No.", "Name", "Sat", "TPID",
+				"Onid", "Tsid", "Sid", "Pid", "Vpid",
+				"Typ", "Fav79", "Lock"};
+		int[] colWidth = {40, 175, 45, 45,
+				45, 45, 45, 45, 45,
+				45, 50, 40};
+		int[] colAlign = {SWT.RIGHT, SWT.LEFT, SWT.CENTER, SWT.CENTER,
+				SWT.CENTER, SWT.CENTER, SWT.CENTER, SWT.CENTER, SWT.CENTER,
+				SWT.CENTER, SWT.CENTER, SWT.CENTER};
+		int text = SortListenerFactory.TYPE_TEXT;
+		int integer = SortListenerFactory.TYPE_INTEGER;
+		int[] colType = {integer, text, integer, integer,
+				integer, integer, integer, integer, integer,
+				text, text, text};
+		
+		for(int c = 0; c < col.length; c++) {
+			col[c] = new TableColumn(table, SWT.CENTER);
+			col[c].setText(colNames[c]);
+			col[c].setWidth(colWidth[c]);
+			col[c].setAlignment(colAlign[c]);
+			col[c].setResizable(true);
+			col[c].setData("type", colType[c]);
+			col[c].addListener(SWT.Selection, SortListenerFactory.getListener());
+		}
+	}
+
+	public static void deleteColumns() {
+		TableColumn[] columns = table.getColumns();
+		for(int i = 0; i < columns.length; i++)
+			columns[i].dispose();
+	}
+	
+	public static void refresh(boolean select) {
 		table.setRedraw(false);
+		
+		/* save the view to restore it */
+		int[] selected = table.getSelectionIndices();
+		int topIndex = table.getTopIndex();
 		
 		/* remove everything to rebuild from TreeMap */
 		table.clearAll();
 		table.removeAll();
 
+		switch(mapType) {
+			case Channel.TYPE_CABLE:
+				fillCable();
+				break;
+			case Channel.TYPE_AIR:
+				fillAir();
+				break;
+			case Channel.TYPE_SAT:
+				fillSat();
+				break;
+		}
+		
+		/* restore view, so we dont't end at top of the table */
+		if(select) table.setSelection(selected);
+		table.setRedraw(true);
+		table.setTopIndex(topIndex);
+	}
+	
+	public static void refresh() {
+		refresh(true);
+	}
+	
+	public static void fillCable() {
+		modeLabel.setText("Mode: map-CableD");
 		/* print out our channels */
 		Iterator<Channel> it = channelList.values().iterator();
 		while(it.hasNext()) {
-			Channel c = it.next();
+			AirCableChannel c = (AirCableChannel)it.next();
+			
 			/* new item */
 			TableItem t = new TableItem(table, SWT.LEFT);
 			
@@ -347,27 +509,108 @@ public class Main {
 				default:					typ = "?";		break;
 			}
 			
-			String fav	= (c.fav == Channel.FAV_Y) ? "yes" : "no";
+			String fav	= ((c.fav & Channel.FLAG_FAV_1)!=0) ? "yes" : "no";
 			String enc	= ((c.enc & Channel.FLAG_SCRAMBLED)!=0) ? "yes" : "no"; 
-			String lock	= (c.lock == Channel.LOCK_Y) ? "yes" : "no";
+			String lock	= ((c.lock & Channel.FLAG_LOCK)!=0) ? "yes" : "no";
+			String fav79 = "";
+			if((c.fav79 & Channel.FLAG_FAV_1) == Channel.FLAG_FAV_1) fav79 += "1,";
+			if((c.fav79 & Channel.FLAG_FAV_2) == Channel.FLAG_FAV_2) fav79 += "2,";
+			if((c.fav79 & Channel.FLAG_FAV_3) == Channel.FLAG_FAV_3) fav79 += "3,";
+			if((c.fav79 & Channel.FLAG_FAV_4) == Channel.FLAG_FAV_4) fav79 += "4,";
+			if(fav79.length()!=0) fav79 = fav79.substring(0, fav79.length()-1);
 			
 			/* build text and asign it */
-			String[] col = new String[] { c.num+"", c.name, c.freq+"",
-				c.symbr+"", c.nid+"", c.onid+"", c.tsid+"", c.sid+"",
-				 c.mpid+"",  c.vpid+"", typ, fav, enc, lock
+			String[] col = new String[] { c.num+"", c.name, c.freq+"", c.symbr+"",
+				 c.nid+"", c.onid+"", c.tsid+"", c.sid+"",
+				 c.mpid+"",  c.vpid+"", typ, fav, fav79, enc, lock
 			};
 			t.setText(col);
 			
 			/* assign a reference to the Channel object, so we can do  drag n drop */
 			t.setData(c);
 		}
-		
-		table.setRedraw(true);
-		/* restore view, so we dont't end at top of the table */
-		table.setTopIndex(topIndex);
 	}
 	
+	public static void fillAir() {
+		modeLabel.setText("Mode: map-AirD");
+		/* print out our channels */
+		Iterator<Channel> it = channelList.values().iterator();
+		while(it.hasNext()) {
+			AirCableChannel c = (AirCableChannel)it.next();
+			
+			/* new item */
+			TableItem t = new TableItem(table, SWT.LEFT);
+			
+			String typ;
+			switch(c.stype) {
+				case Channel.STYPE_TV:		typ = "TV";		break;
+				case Channel.STYPE_RADIO:	typ = "Radio";	break;
+				case Channel.STYPE_DATA:	typ = "Data";	break;
+				case Channel.STYPE_HD:		typ = "HD";		break;
+				default:					typ = "?";		break;
+			}
+			
+			String fav	= ((c.fav & Channel.FLAG_FAV_1)!=0) ? "yes" : "no";
+			String enc	= ((c.enc & Channel.FLAG_SCRAMBLED)!=0) ? "yes" : "no"; 
+			String lock	= ((c.lock & Channel.FLAG_LOCK)!=0) ? "yes" : "no";
+			
+			String fav79 = "";
+			if((c.fav79 & Channel.FLAG_FAV_1) == Channel.FLAG_FAV_1) fav79 += "1,";
+			if((c.fav79 & Channel.FLAG_FAV_2) == Channel.FLAG_FAV_2) fav79 += "2,";
+			if((c.fav79 & Channel.FLAG_FAV_3) == Channel.FLAG_FAV_3) fav79 += "3,";
+			if((c.fav79 & Channel.FLAG_FAV_4) == Channel.FLAG_FAV_4) fav79 += "4,";
+			if(fav79.length()!=0) fav79 = fav79.substring(0, fav79.length()-1);
+			
+			/* build text and asign it */
+			String[] col = new String[] { c.num+"", c.name, c.freq+"", c.lcn+"",
+				 c.onid+"", c.tsid+"", c.sid+"",
+				 c.mpid+"",  c.vpid+"", typ, fav, fav79, enc, lock
+			};
+			t.setText(col);
+			
+			/* assign a reference to the Channel object, so we can do  drag n drop */
+			t.setData(c);
+		}
+	}
 	
+	public static void fillSat() {
+		modeLabel.setText("Mode: map-SateD");
+		/* print out our channels */
+		Iterator<Channel> it = channelList.values().iterator();
+		while(it.hasNext()) {
+			SatChannel c = (SatChannel)it.next();
+			
+			/* new item */
+			TableItem t = new TableItem(table, SWT.LEFT);
+			
+			String typ;
+			switch(c.stype) {
+				case Channel.STYPE_TV:		typ = "TV";		break;
+				case Channel.STYPE_RADIO:	typ = "Radio";	break;
+				case Channel.STYPE_DATA:	typ = "Data";	break;
+				case Channel.STYPE_HD:		typ = "HD";		break;
+				default:					typ = "?";		break;
+			}
+			
+			String lock	= (c.lock == Channel.FLAG_LOCK) ? "yes" : "no";
+			String fav79 = "";
+			if((c.fav79 & Channel.FLAG_FAV_1) == Channel.FLAG_FAV_1) fav79 += "1,";
+			if((c.fav79 & Channel.FLAG_FAV_2) == Channel.FLAG_FAV_2) fav79 += "2,";
+			if((c.fav79 & Channel.FLAG_FAV_3) == Channel.FLAG_FAV_3) fav79 += "3,";
+			if((c.fav79 & Channel.FLAG_FAV_4) == Channel.FLAG_FAV_4) fav79 += "4,";
+			if(fav79.length()!=0) fav79 = fav79.substring(0, fav79.length()-1);
+			
+			/* build text and asign it */
+			String[] col = new String[] { c.num+"", c.name, c.sat+"", c.tpid+"",
+				c.onid+"", c.tsid+"", c.sid+"", c.mpid+"",  c.vpid+"",
+				typ, fav79, lock};
+			t.setText(col);
+			
+			/* assign a reference to the Channel object, so we can do drag n drop */
+			t.setData(c);
+		}
+	}
+		
 	public static void moveChannels(Channel[] selected, Channel targetChan) {
 		int cIndex = targetChan.num;
 		
@@ -405,7 +648,7 @@ public class Main {
 			}
 		}
 		
-		refresh();
+		refresh(false);
 	}
 	
 	static Channel[] getSelected() {
@@ -437,19 +680,26 @@ public class Main {
 
 /* assign actions to our menubar */
 class MyListener implements SelectionListener {
-	public static final int ACTION_OPEN     = 0;
-	public static final int ACTION_SAVE     = 1;
-	public static final int ACTION_SAVEAS   = 2;
-	public static final int ACTION_ADDCHAN  = 3;
-	public static final int ACTION_EDITCHAN = 4;
-	public static final int ACTION_MOVECHAN = 5;
-	public static final int ACTION_DELETE   = 6;
-	public static final int ACTION_FINDCHAN = 7;
-	public static final int ACTION_FAVADD	= 8;
-	public static final int ACTION_FAVDEL	= 9;
-	public static final int ACTION_LOCKADD	= 10;
-	public static final int ACTION_LOCKDEL	= 11;
-	public static final int ACTION_SKY      = 12;
+	public static final int ACTION_NEWAIR   = 0;
+	public static final int ACTION_NEWCABLE = 1;
+	public static final int ACTION_NEWSAT   = 2;
+	public static final int ACTION_OPEN     = 3;
+	public static final int ACTION_SAVE     = 4;
+	public static final int ACTION_SAVEAS   = 5;
+	public static final int ACTION_ADDCHAN  = 6;
+	public static final int ACTION_EDITCHAN = 7;
+	public static final int ACTION_MOVECHAN = 8;
+	public static final int ACTION_DELETE   = 9;
+	public static final int ACTION_FINDCHAN = 10;
+	public static final int ACTION_FAVADD	= 11;
+	public static final int ACTION_FAVDEL	= 12;
+	public static final int ACTION_LOCKADD	= 13;
+	public static final int ACTION_LOCKDEL	= 14;
+	public static final int ACTION_SKY      = 15;
+	public static final int ACTION_FAV79_1	= 64;
+	public static final int ACTION_FAV79_2	= 65;
+	public static final int ACTION_FAV79_3	= 66;
+	public static final int ACTION_FAV79_4	= 67;
 	public static final int ACTION_ABOUT    = 128;
 	
 	private Shell shell;
@@ -468,6 +718,27 @@ class MyListener implements SelectionListener {
 			int action = (Integer) e.widget.getData("action");
 			
 			switch(action) {
+				case ACTION_NEWAIR:
+					Main.channelList.clear();
+					Main.refresh();
+					Main.mapType = Channel.TYPE_AIR;
+					Main.deleteColumns();
+					Main.createColumnsAir();
+					break;
+				case ACTION_NEWCABLE:
+					Main.channelList.clear();
+					Main.refresh();
+					Main.mapType = Channel.TYPE_CABLE;
+					Main.deleteColumns();
+					Main.createColumnsCable();
+					break;
+				case ACTION_NEWSAT:
+					Main.channelList.clear();
+					Main.refresh();
+					Main.mapType = Channel.TYPE_SAT;
+					Main.deleteColumns();
+					Main.createColumnsSat();
+					break;
 				case ACTION_OPEN:
 					/* show open dialog to select a file */
 					FileDialog fd = new FileDialog(shell, SWT.OPEN);
@@ -515,7 +786,15 @@ class MyListener implements SelectionListener {
 					Main.filepath = spath;
 					return;
 				case ACTION_ADDCHAN:
-					new Edit(new Channel());
+					switch(Main.mapType) {
+						case Channel.TYPE_CABLE:
+						case Channel.TYPE_AIR:
+							new Edit(new AirCableChannel());
+							break;
+						case Channel.TYPE_SAT:
+							new Edit(new SatChannel());
+							break;
+					}
 					return;
 				case ACTION_EDITCHAN:
 					TableItem[] item = Main.table.getSelection();
@@ -537,29 +816,53 @@ class MyListener implements SelectionListener {
 				case ACTION_FAVADD:
 					Channel[] addfav = Main.getSelected();
 					for(int i = 0; i<addfav.length; i++)
-						addfav[i].fav = Channel.FAV_Y;
+						addfav[i].fav |= Channel.FLAG_FAV_1;
 					Main.refresh();
 					return;
 				case ACTION_FAVDEL:
 					Channel[] delfav = Main.getSelected();
 					for(int i = 0; i<delfav.length; i++)
-						delfav[i].fav = Channel.FAV_N;
+						delfav[i].fav &= ~Channel.FLAG_FAV_1;
 					Main.refresh();
 					return;
 				case ACTION_LOCKADD:
 					Channel[] addlock = Main.getSelected();
 					for(int i = 0; i<addlock.length; i++)
-						addlock[i].lock = Channel.LOCK_Y;
+						addlock[i].lock |= Channel.FLAG_LOCK;
 					Main.refresh();
 					return;
 				case ACTION_LOCKDEL:
 					Channel[] dellock = Main.getSelected();
 					for(int i = 0; i<dellock.length; i++)
-						dellock[i].lock = Channel.LOCK_N;
+						dellock[i].lock &= ~Channel.FLAG_LOCK;
 					Main.refresh();
 					return;
 				case ACTION_SKY:
 					SkyFeedChannels.add(Main.channelList);
+					Main.refresh();
+					return;
+				case ACTION_FAV79_1:
+					Channel[] fav791 = Main.getSelected();
+					for(int i = 0; i<fav791.length; i++)
+						fav791[i].fav79 ^= Channel.FLAG_FAV_1;
+					Main.refresh();
+					return;
+				case ACTION_FAV79_2:
+					Channel[] fav792 = Main.getSelected();
+					for(int i = 0; i<fav792.length; i++)
+						fav792[i].fav79 ^= Channel.FLAG_FAV_2;
+					Main.refresh();
+					return;
+				case ACTION_FAV79_3:
+					Channel[] fav793 = Main.getSelected();
+					for(int i = 0; i<fav793.length; i++)
+						fav793[i].fav79 ^= Channel.FLAG_FAV_3;
+					Main.refresh();
+					return;
+				case ACTION_FAV79_4:
+					Channel[] fav794 = Main.getSelected();
+					for(int i = 0; i<fav794.length; i++)
+						fav794[i].fav79 ^= Channel.FLAG_FAV_4;
 					Main.refresh();
 					return;
 				case ACTION_ABOUT:
@@ -574,7 +877,9 @@ class MyListener implements SelectionListener {
 
 /* user wants to sort the table, do him the favour */
 class SortListenerFactory implements Listener {
-    private Comparator<TableItem> currentComparator = null;
+    public static final int TYPE_INTEGER = 0;
+    public static final int TYPE_TEXT = 1;
+	private Comparator<TableItem> currentComparator = null;
     
     private SortListenerFactory() {
     	currentComparator = Comparator;
@@ -585,6 +890,7 @@ class SortListenerFactory implements Listener {
     }
     
     private int colIndex = 0;
+    private int colType = 0;
     private int updown   = -1;
           
     // do a comparator for array sort
@@ -594,13 +900,9 @@ class SortListenerFactory implements Listener {
             String v1 = t1.getText(colIndex).toLowerCase();
             String v2 = t2.getText(colIndex).toLowerCase();
 
-            switch(colIndex) {
+            switch(colType) {
             	/* we are in a text column, treat as text */
-            	case 1:
-            	case 10:
-            	case 11:
-            	case 12:
-            	case 13:
+            	case TYPE_TEXT:
             		return v1.compareTo(v2)*updown;
             	/* we are in another column, parse to integer and compare then */
             	default:
@@ -619,7 +921,8 @@ class SortListenerFactory implements Listener {
 
         /* set columnIndex, so we can decide what comparator should to */
         colIndex = searchColumnIndex(currentColumn);
-        
+        colType = (Integer)currentColumn.getData("type"); 
+        	
         /* disable redrawing until everything is done */
         table.setRedraw(false);
 

@@ -1,6 +1,6 @@
 /**
  * @author polskafan <polska at polskafan.de>
- * @version 0.31
+ * @version 0.40
   
 	Copyright 2009 by Timo Dobbrick
 	For more information see http://www.polskafan.de/samsung
@@ -41,15 +41,20 @@ import org.eclipse.swt.widgets.Monitor;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
+import samyedit.AirCableChannel;
 import samyedit.Channel;
+import samyedit.SatChannel;
 
 public class Edit {
 	public Channel channel;
+	public Shell dialog;
 	
-	public Text[]   t = new Text[9];
+	public Text[]   t = new Text[6];
 	public Button[] r_stype = new Button[4];
-	public Button[] r_qam   = new Button[2];
 	public Button[] r_misc  = new Button[3];
+	public Button[] r_fav79 = new Button[4];
+	public Text[]	t_add = new Text[4];
+	public Button[]	r_add = new Button[5];
 	
 	public Edit(Channel channel) {
 		this.channel = channel;
@@ -57,7 +62,7 @@ public class Edit {
 	}
 
 	private void createGUI() {
-		Shell dialog = new Shell(Main.shell, SWT.DIALOG_TRIM | SWT.APPLICATION_MODAL);
+		dialog = new Shell(Main.shell, SWT.DIALOG_TRIM | SWT.APPLICATION_MODAL);
 		if (channel.num == -1)
 			dialog.setText("Add Channel");
 		else
@@ -87,52 +92,34 @@ public class Edit {
 		gridData.grabExcessHorizontalSpace = true;
 		
 		l = new Label(dialog, SWT.CENTER);
-		l.setText("Frequency:");
+		l.setText("ONID:");
 		t[1] = new Text(dialog, SWT.SINGLE | SWT.BORDER);
-		t[1].setText(channel.freq+"");
+		t[1].setText(channel.onid+"");
 		t[1].setLayoutData(gridData);
 		
 		l = new Label(dialog, SWT.CENTER);
-		l.setText("Symbolrate (ksymb/s):");
+		l.setText("TSID:");
 		t[2] = new Text(dialog, SWT.SINGLE | SWT.BORDER);
-		t[2].setText(channel.symbr+"");
+		t[2].setText(channel.tsid+"");
 		t[2].setLayoutData(gridData);
 
 		l = new Label(dialog, SWT.CENTER);
-		l.setText("NID:");
-		t[8] = new Text(dialog, SWT.SINGLE | SWT.BORDER);
-		t[8].setText(channel.nid+"");
-		t[8].setLayoutData(gridData);
-		
-		l = new Label(dialog, SWT.CENTER);
-		l.setText("ONID:");
-		t[3] = new Text(dialog, SWT.SINGLE | SWT.BORDER);
-		t[3].setText(channel.onid+"");
-		t[3].setLayoutData(gridData);
-		
-		l = new Label(dialog, SWT.CENTER);
-		l.setText("TSID:");
-		t[4] = new Text(dialog, SWT.SINGLE | SWT.BORDER);
-		t[4].setText(channel.tsid+"");
-		t[4].setLayoutData(gridData);
-
-		l = new Label(dialog, SWT.CENTER);
 		l.setText("SID:");
-		t[5] = new Text(dialog, SWT.SINGLE | SWT.BORDER);
-		t[5].setText(channel.sid+"");
-		t[5].setLayoutData(gridData);
+		t[3] = new Text(dialog, SWT.SINGLE | SWT.BORDER);
+		t[3].setText(channel.sid+"");
+		t[3].setLayoutData(gridData);
 
 		l = new Label(dialog, SWT.CENTER);
 		l.setText("PID:");
-		t[6] = new Text(dialog, SWT.SINGLE | SWT.BORDER);
-		t[6].setText(channel.mpid+"");
-		t[6].setLayoutData(gridData);
+		t[4] = new Text(dialog, SWT.SINGLE | SWT.BORDER);
+		t[4].setText(channel.mpid+"");
+		t[4].setLayoutData(gridData);
 
 		l = new Label(dialog, SWT.CENTER);
 		l.setText("VPID:");
-		t[7] = new Text(dialog, SWT.SINGLE | SWT.BORDER);
-		t[7].setText(channel.vpid+"");
-		t[7].setLayoutData(gridData);
+		t[5] = new Text(dialog, SWT.SINGLE | SWT.BORDER);
+		t[5].setText(channel.vpid+"");
+		t[5].setLayoutData(gridData);
 
 		gridData = new GridData();
 		gridData.horizontalSpan = 2;
@@ -158,33 +145,52 @@ public class Edit {
 		g.pack();
 		
 		g = new Group(dialog, SWT.CENTER);
-		g.setText("Modulation");
-		g.setLayout(new RowLayout());
-		r_qam[0] = new Button(g, SWT.RADIO);
-		r_qam[0].setText("QAM64");
-		if(channel.qam == Channel.QAM64)  r_qam[0].setSelection(true);
-		r_qam[1] = new Button(g, SWT.RADIO);
-		r_qam[1].setText("QAM256");
-		if(channel.qam == Channel.QAM256) r_qam[1].setSelection(true);
-		g.setLayoutData(gridData);
-		g.pack();
-
-		g = new Group(dialog, SWT.CENTER);
 		g.setText("Misc");
 		g.setLayout(new RowLayout());
-		r_misc [0] = new Button(g, SWT.CHECK);
-		r_misc[0].setText("Favourite");
-		if(channel.fav == Channel.FAV_Y)  r_misc[0].setSelection(true);
+		r_misc[0] = new Button(g, SWT.CHECK);
+		r_misc[0].setText("Encrypted");
+		if((channel.enc & Channel.FLAG_SCRAMBLED)!=0) r_misc[0].setSelection(true);
 		r_misc[1] = new Button(g, SWT.CHECK);
-		r_misc[1].setText("Encrypted");
-		if((channel.enc & Channel.FLAG_SCRAMBLED)!=0) r_misc[1].setSelection(true);
+		r_misc[1].setText("Locked");
+		if((channel.lock & Channel.FLAG_LOCK)!=0) r_misc[1].setSelection(true);
 		r_misc[2] = new Button(g, SWT.CHECK);
-		r_misc[2].setText("Locked");
-		if(channel.lock == Channel.LOCK_Y) r_misc[2].setSelection(true);
-		
+		r_misc[2].setText("Favourite");
+		if((channel.fav & Channel.FLAG_FAV_1)!=0) r_misc[2].setSelection(true);
+
 		g.setLayoutData(gridData);
 		g.pack();
 		
+		g = new Group(dialog, SWT.CENTER);
+		g.setText("Favourites (x79)");
+		g.setLayout(new RowLayout());
+		r_fav79[0] = new Button(g, SWT.CHECK);
+		r_fav79[0].setText("Fav1");
+		if((channel.fav79 & Channel.FLAG_FAV_1)!=0) r_fav79[0].setSelection(true);
+		r_fav79[1] = new Button(g, SWT.CHECK);
+		r_fav79[1].setText("Fav2");
+		if((channel.fav79 & Channel.FLAG_FAV_2)!=0) r_fav79[1].setSelection(true);
+		r_fav79[2] = new Button(g, SWT.CHECK);
+		r_fav79[2].setText("Fav3");
+		if((channel.fav79 & Channel.FLAG_FAV_3)!=0) r_fav79[2].setSelection(true);
+		r_fav79[3] = new Button(g, SWT.CHECK);
+		r_fav79[3].setText("Fav4");
+		if((channel.fav79 & Channel.FLAG_FAV_4)!=0) r_fav79[3].setSelection(true);		
+		g.setLayoutData(gridData);
+		g.pack();
+		
+		switch(Main.mapType) {
+			case Channel.TYPE_AIR:
+				editAir();
+				break;
+			case Channel.TYPE_CABLE:
+				editCable();
+				break;
+			case Channel.TYPE_SAT:
+				editSat();
+				break;
+		}
+		
+		/* Add/Edit/Cancel Buttons */
 		gridData = new GridData();
 		gridData.horizontalSpan = 2;
 		gridData.horizontalAlignment = GridData.CENTER;
@@ -219,6 +225,86 @@ public class Edit {
 	    dialog.setSize(250, rect.height);
 	    dialog.open();
 	}
+	
+	void editCable() {
+		GridData gridData = new GridData();
+		gridData.horizontalAlignment = GridData.FILL;
+		gridData.grabExcessHorizontalSpace = true;
+		
+		AirCableChannel c = (AirCableChannel) channel;
+		Label l = new Label(dialog, SWT.CENTER);
+		l.setText("NID:");
+		t_add[0] = new Text(dialog, SWT.SINGLE | SWT.BORDER);
+		t_add[0].setText(c.nid+"");
+		t_add[0].setLayoutData(gridData);
+		
+		l = new Label(dialog, SWT.CENTER);
+		l.setText("Frequency:");
+		t_add[1] = new Text(dialog, SWT.SINGLE | SWT.BORDER);
+		t_add[1].setText(c.freq+"");
+		t_add[1].setLayoutData(gridData);
+		
+		l = new Label(dialog, SWT.CENTER);
+		l.setText("SymbR (ksymb/s):");
+		t_add[2] = new Text(dialog, SWT.SINGLE | SWT.BORDER);
+		t_add[2].setText(c.symbr+"");
+		t_add[2].setLayoutData(gridData);
+		
+		gridData = new GridData();
+		gridData.horizontalSpan = 2;
+		gridData.horizontalAlignment = GridData.FILL;
+		gridData.grabExcessHorizontalSpace = true;
+		
+		Group g = new Group(dialog, SWT.CENTER);
+		g.setText("QAM");
+		g.setLayout(new RowLayout());
+		r_add[0] = new Button(g, SWT.RADIO);
+		r_add[0].setText("QAM64");
+		if(c.qam == AirCableChannel.QAM64)	r_add[0].setSelection(true);
+		r_add[1] = new Button(g, SWT.RADIO);
+		r_add[1].setText("QAM256");
+		if(c.qam == AirCableChannel.QAM256)	r_add[1].setSelection(true);
+		g.setLayoutData(gridData);
+		g.pack();
+	}
+	
+	void editAir() {
+		GridData gridData = new GridData();
+		gridData.horizontalAlignment = GridData.FILL;
+		gridData.grabExcessHorizontalSpace = true;
+		
+		AirCableChannel c = (AirCableChannel) channel;
+		Label l = new Label(dialog, SWT.CENTER);
+		l.setText("NID:");
+		t_add[0] = new Text(dialog, SWT.SINGLE | SWT.BORDER);
+		t_add[0].setText(c.nid+"");
+		t_add[0].setLayoutData(gridData);
+		
+		l = new Label(dialog, SWT.CENTER);
+		l.setText("Frequency:");
+		t_add[1] = new Text(dialog, SWT.SINGLE | SWT.BORDER);
+		t_add[1].setText(c.freq+"");
+		t_add[1].setLayoutData(gridData);
+	}
+	
+	void editSat() {
+		GridData gridData = new GridData();
+		gridData.horizontalAlignment = GridData.FILL;
+		gridData.grabExcessHorizontalSpace = true;
+		
+		SatChannel c = (SatChannel) channel;
+		Label l = new Label(dialog, SWT.CENTER);
+		l.setText("Sat:");
+		t_add[0] = new Text(dialog, SWT.SINGLE | SWT.BORDER);
+		t_add[0].setText(c.sat+"");
+		t_add[0].setLayoutData(gridData);
+		
+		l = new Label(dialog, SWT.CENTER);
+		l.setText("TP:");
+		t_add[1] = new Text(dialog, SWT.SINGLE | SWT.BORDER);
+		t_add[1].setText(c.tpid+"");
+		t_add[1].setLayoutData(gridData);
+	}
 }
 
 class doEdit implements SelectionListener {
@@ -237,14 +323,11 @@ class doEdit implements SelectionListener {
 		
 		channel.name	= edit.t[0].getText();
 		try {
-			channel.freq	= new Integer(edit.t[1].getText());
-			channel.symbr	= new Integer(edit.t[2].getText());
-			channel.onid	= new Integer(edit.t[3].getText());
-			channel.tsid	= new Integer(edit.t[4].getText());
-			channel.sid		= new Integer(edit.t[5].getText());
-			channel.mpid	= new Integer(edit.t[6].getText());
-			channel.vpid	= new Integer(edit.t[7].getText());
-			channel.nid 	= new Integer(edit.t[8].getText());
+			channel.onid	= new Integer(edit.t[1].getText());
+			channel.tsid	= new Integer(edit.t[2].getText());
+			channel.sid		= new Integer(edit.t[3].getText());
+			channel.mpid	= new Integer(edit.t[4].getText());
+			channel.vpid	= new Integer(edit.t[5].getText());
 		} catch(NumberFormatException e) {
 			new ErrorMessage("Cannot get number representation "+e.getMessage());
 			return;
@@ -255,23 +338,78 @@ class doEdit implements SelectionListener {
 		if(edit.r_stype[2].getSelection()) channel.stype = Channel.STYPE_DATA;
 		if(edit.r_stype[3].getSelection()) channel.stype = Channel.STYPE_HD;
 		
-		if(edit.r_qam[0].getSelection()) channel.qam = Channel.QAM64;
-		if(edit.r_qam[1].getSelection()) channel.qam = Channel.QAM256;
-		
 		if(edit.r_misc[0].getSelection())
-			channel.fav = Channel.FAV_Y;
-		else
-			channel.fav = Channel.FAV_N;
-		
-		if(edit.r_misc[1].getSelection())
 			channel.enc |= Channel.FLAG_SCRAMBLED;
 		else
 			channel.enc &= ~Channel.FLAG_SCRAMBLED;
 		
-		if(edit.r_misc[2].getSelection())
-			channel.lock = Channel.LOCK_Y;
+		if(edit.r_misc[1].getSelection())
+			channel.lock |= Channel.FLAG_LOCK;
 		else
-			channel.lock = Channel.LOCK_N;
+			channel.lock &= ~Channel.FLAG_LOCK;
+		
+		if(edit.r_misc[2].getSelection())
+			channel.fav |= Channel.FLAG_FAV_1;
+		else
+			channel.fav &= ~Channel.FLAG_FAV_1;
+		
+		if(edit.r_fav79[0].getSelection())
+			channel.fav79 |= Channel.FLAG_FAV_1;
+		else
+			channel.fav79 &= ~Channel.FLAG_FAV_1;
+		
+		if(edit.r_fav79[1].getSelection())
+			channel.fav79 |= Channel.FLAG_FAV_2;
+		else
+			channel.fav79 &= ~Channel.FLAG_FAV_2;
+		
+		if(edit.r_fav79[2].getSelection())
+			channel.fav79 |= Channel.FLAG_FAV_3;
+		else
+			channel.fav79 &= ~Channel.FLAG_FAV_3;
+		
+		if(edit.r_fav79[3].getSelection())
+			channel.fav79 |= Channel.FLAG_FAV_4;
+		else
+			channel.fav79 &= ~Channel.FLAG_FAV_4;
+		
+		switch(Main.mapType) {
+			case Channel.TYPE_CABLE:
+				AirCableChannel cable = (AirCableChannel) channel;
+				try {
+					cable.nid	= new Integer(edit.t_add[0].getText());
+					cable.freq	= new Integer(edit.t_add[1].getText());
+					cable.symbr	= new Integer(edit.t_add[2].getText());
+				} catch(NumberFormatException e) {
+					new ErrorMessage("Cannot get number representation "+e.getMessage());
+					return;
+				}
+				if(edit.r_misc[0].getSelection())
+					cable.qam = AirCableChannel.QAM64;
+				if(edit.r_add[1].getSelection())
+					cable.qam = AirCableChannel.QAM256;
+				break;
+			case Channel.TYPE_AIR:
+				AirCableChannel air = (AirCableChannel) channel;
+				try {
+					air.nid		= new Integer(edit.t_add[0].getText());
+					air.freq	= new Integer(edit.t_add[1].getText());
+				} catch(NumberFormatException e) {
+					new ErrorMessage("Cannot get number representation "+e.getMessage());
+					return;
+				}
+				break;
+			case Channel.TYPE_SAT:
+				SatChannel sat = (SatChannel) channel;
+				try {
+					sat.sat		= new Integer(edit.t_add[0].getText());
+					sat.tpid	= new Integer(edit.t_add[1].getText());
+				} catch(NumberFormatException e) {
+					new ErrorMessage("Cannot get number representation "+e.getMessage());
+					return;
+				}
+				break;
+		}
 		
 		if(channel.num == -1) {
 			try {

@@ -1,6 +1,6 @@
 /**
  * @author polskafan <polska at polskafan.de>
- * @version 0.31
+ * @version 0.40
   
 	Copyright 2009 by Timo Dobbrick
 	For more information see http://www.polskafan.de/samsung
@@ -140,6 +140,7 @@ class DoMove implements SelectionListener {
 			Main.channelList.remove(targetChan.num);
 		}
 		Main.refresh();
+		Main.table.setSelection(Main.channelList.headMap(targetNumber).size());
 		shell.dispose();
 	}
 }
