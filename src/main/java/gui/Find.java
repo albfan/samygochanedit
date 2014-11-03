@@ -82,13 +82,14 @@ public class Find {
 		gridData = new GridData();
 		gridData.horizontalAlignment = GridData.CENTER;
 		
-		Button b = new Button(buttons, SWT.CENTER);
-		b.setText("Find Next");
-		b.addSelectionListener(new DoFind(dialog, t));
+		Button bFind = new Button(buttons, SWT.CENTER);
+		bFind.setText("Find Next");
+		bFind.addSelectionListener(new DoFind(dialog, t));
+	    dialog.setDefaultButton(bFind); //RB set the default Enter action to be that Button
 		
-		b = new Button(buttons, SWT.CENTER);
-		b.setText("Close");
-		b.addSelectionListener(new Exit(dialog));
+		Button bClose = new Button(buttons, SWT.CENTER);
+		bClose.setText("Close");
+		bClose.addSelectionListener(new Exit(dialog));
 		
 		dialog.pack();
 		

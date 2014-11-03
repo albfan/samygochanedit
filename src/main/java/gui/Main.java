@@ -111,7 +111,7 @@ public class Main {
 	/** byte describing the smcFile Version: B-series / C-series / D-series */
 	static File currentDir = new File (".");
 	
-	static String version = "v0.51cd";
+	static String version = "v0.53cd";
 	static String series  = "C and D-Series";
 	
 	public static void main(String[] args) {
@@ -122,7 +122,7 @@ public class Main {
 			else if (args[firstArg].equals("-s")) { scmFile  = "" + args[++firstArg]; }
 			else if (args[firstArg].equals("-v")) { String version = args[++firstArg]; scmVersion = version.toCharArray()[0];}
 			else if (args[firstArg].equals("-h")) {
-				System.out.println("usage: java -jar "+ "<jarfile>" + " [-d temporary directory] [-c channel-file] [-s scm-file] [-v {3|4}] [-h]");
+				System.out.println("usage: java -jar "+ "<jarfile>" + " [-d temporary directory] [-c channel-file] [-s scm-file] [-v {C|D}] [-h]");
 				return;
 			}
 		}
@@ -1065,7 +1065,7 @@ class MySelListener implements SelectionListener {
 				case ACTION_OPEN_SCM:
 					String path = null;
 					path = Main.currentDir.getAbsolutePath();
-					path = selectFile("Open SCM File",scmOrAll, path);
+					path = selectFileToOpen("Open SCM File",scmOrAll, path);
 					if(path == null) {
 						Main.statusUpdate( Main.LOG_INFO, "Open SCM: No File selected!");
 						return;
@@ -1083,7 +1083,7 @@ class MySelListener implements SelectionListener {
 					} else 	
 						path = Main.tempDir;
 					
-					path = selectFile("Open File", allFiles, path);
+					path = selectFileToOpen("Open File", allFiles, path);
 					if(path == null) {
 						Main.statusUpdate(Main.LOG_INFO, "Open: No File selected!");
 						return;
@@ -1095,7 +1095,7 @@ class MySelListener implements SelectionListener {
 						} else {
 							Main.statusUpdate(Main.LOG_INFO, "Open: Successful extraction of file: "+path);
 						}
-						path = selectFile("Open Channel File",mapOrAll , Main.tempDir);
+						path = selectFileToSave("Open Channel File",mapOrAll , Main.tempDir);
 						if(path == null) {
 							Main.statusUpdate(Main.LOG_INFO, "Open: No Channel-File selected!");
 							return;
@@ -1115,7 +1115,7 @@ class MySelListener implements SelectionListener {
 					Main.statusUpdate(Main.LOG_INFO, "Finished opening file: "+Main.chanFile);
 					return;
 				case ACTION_SAVEAS:
-					spath = selectFile("Save File as",allFiles, Main.tempDir);
+					spath = selectFileToSave("Save File as",allFiles, Main.tempDir);
 					if (spath == null) {
 						return; //no file opened selected
 					}
@@ -1146,7 +1146,7 @@ class MySelListener implements SelectionListener {
 						scmPath = Main.scmFile;
 					}
 					if ((scmPath == null) || (action == ACTION_SAVE_SCM_AS)) {
-						scmPath = selectFile("Save SCM as",scmOrAll, scmPath);
+						scmPath = selectFileToSave("Save SCM as",scmOrAll, scmPath);
 					}
 					if(scmPath == null) return; //no file defined
 					Main.scmFile = scmPath; //set new scmFile name
@@ -1275,7 +1275,7 @@ class MySelListener implements SelectionListener {
      * @return String  - the filename selected or 
      * <dd>null - if unsuccessful</dd>
      */
-    private String selectFile(String message, String[] filter, String dir) {
+    private String selectFileToOpen(String message, String[] filter, String dir) {
     	String path;
 		FileDialog fd = new FileDialog(shell, SWT.OPEN);
 		if (message!=null) fd.setText(message);
@@ -1284,8 +1284,26 @@ class MySelListener implements SelectionListener {
 		path = fd.open();
 		return path;
     }
-}
 
+
+    /** File Dialog to select a file
+     * 
+     * @param message displayed for selection
+     * @param filter  file selection filters
+     * @param dir     directory to look into
+     * @return String  - the filename selected or 
+     * <dd>null - if unsuccessful</dd>
+     */
+    private String selectFileToSave(String message, String[] filter, String dir) {
+    	String path;
+    	FileDialog fd = new FileDialog(shell, SWT.SAVE);
+    	if (message!=null) fd.setText(message);
+    	if (filter!= null) fd.setFilterExtensions(filter);
+    	if (dir   != null) fd.setFilterPath(dir);
+    	path = fd.open();
+    	return path;
+    }
+}
 class MyListener implements Listener {
     public void handleEvent(Event event) {
     	MenuItem[] menuItems = ((Menu)event.widget).getItems();

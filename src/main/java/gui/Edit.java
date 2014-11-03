@@ -215,16 +215,17 @@ public class Edit {
 		buttons.setLayout(buttonLayout);
 		buttons.setLayoutData(gridData);
 		
-		Button b = new Button(buttons, SWT.CENTER);
+		Button bEnter = new Button(buttons, SWT.CENTER);
 		if (channel.num == -1)
-			b.setText("Add");
+			bEnter.setText("Add");
 		else
-			b.setText("Change");
-		b.addSelectionListener(new doEdit(dialog, this));
+			bEnter.setText("Change");
+		bEnter.addSelectionListener(new doEdit(dialog, this));
+	    dialog.setDefaultButton(bEnter); //RB set the default Enter action to be that Button
 		
-		b = new Button(buttons, SWT.CENTER);
-		b.setText("&Abort");
-		b.addSelectionListener(new Exit(dialog));
+		Button bAbort = new Button(buttons, SWT.CENTER);
+		bAbort.setText("&Abort");
+		bAbort.addSelectionListener(new Exit(dialog));
 		
 		dialog.pack();
 		
@@ -234,7 +235,6 @@ public class Edit {
 	    int x = bounds.x + (bounds.width - rect.width) / 2;
 	    int y = bounds.y + (bounds.height - rect.height) / 2;
 	    dialog.setLocation(x, y);
-	    
 	    dialog.setSize(250, rect.height);
 	    dialog.open();
 	}

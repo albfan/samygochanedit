@@ -82,13 +82,14 @@ public class Move {
 		gridData = new GridData();
 		gridData.horizontalAlignment = GridData.CENTER;
 		
-		Button b = new Button(buttons, SWT.CENTER);
-		b.setText("Move");
-		b.addSelectionListener(new DoMove(dialog, t));
-		
-		b = new Button(buttons, SWT.CENTER);
-		b.setText("Abort");
-		b.addSelectionListener(new Exit(dialog));
+		Button bMove = new Button(buttons, SWT.CENTER);
+		bMove.setText("Move");
+		bMove.addSelectionListener(new DoMove(dialog, t));
+	    dialog.setDefaultButton(bMove); //RB set the default Enter action to be that Button
+
+		Button bAbort = new Button(buttons, SWT.CENTER);
+		bAbort.setText("Abort");
+		bAbort.addSelectionListener(new Exit(dialog));
 		
 		dialog.pack();
 		
