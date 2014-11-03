@@ -1,24 +1,24 @@
 /**
  * @author polskafan <polska at polskafan.de>
- * @version 0.2
+ * @version 0.31
   
 	Copyright 2009 by Timo Dobbrick
 	For more information see http://www.polskafan.de/samsung
  
     This file is part of SamyGO ChanEdit.
 
-    Foobar is free software: you can redistribute it and/or modify
+    This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-    Foobar is distributed in the hope that it will be useful,
+    This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
  */
 
@@ -26,30 +26,40 @@ package samyedit;
 
 /* new Channel object, make it cloneable if we need to copy a channel */
 public class Channel implements Cloneable {
-	public static final byte QAM64 = 0x41;
-	public static final byte QAM256 = 0x42;
+	public static final byte STYPE_TV		= 0x01;
+	public static final byte STYPE_RADIO	= 0x02;
+	public static final byte STYPE_DATA		= 0x0C;
+	public static final byte STYPE_HD		= 0x19;
 	
-	public static final byte ENC_FTA = 0x1f;
-	public static final byte ENC_SCRAMBLED = 0x3f;
+	public static final byte FLAG_SCRAMBLED = 0x20;
 	
-	public static final byte STYPE_TV = 0x01;
-	public static final byte STYPE_RADIO = 0x02;
-	public static final byte STYPE_DATA = 0x0C;
+	public static final byte QAM64	= 0x41;
+	public static final byte QAM256	= 0x42;
+	
+	public static final byte FAV_N = 0x46;
+	public static final byte FAV_Y = 0x47;
+
+	public static final byte LOCK_N = 0x00;
+	public static final byte LOCK_Y = 0x01;
 	
 	public String name = "";
-	public int num = -1;
-	public int sid = -1;
-	public int vpid = -1;
-	public int mpid = -1;
+	public int num	= -1;
+	public int sid	= -1;
+	public int vpid	= -1;
+	public int mpid	= -1;
 	
-	public int bouqet = -1;
-	public int onid = -1;
-	public int tsid = -1;
-	public int freq = -1;
-	public int symbr = -1;	
-	public byte qam = -1;
-	public byte stype = -1;
-	public byte enc = -1;
+	public int bouqet	= -1;
+	public int nid		= -1;
+	public int onid		= -1;
+	public int tsid		= -1;
+	public int freq		= -1;
+	public int symbr	= -1;
+	
+	public byte qam		= QAM64;
+	public byte stype	= STYPE_TV;
+	public byte enc		= 0x00;
+	public byte fav		= FAV_N;
+	public byte lock	= 0; 
 
 	/* make the channel printable */
 	public String toString() {
@@ -70,15 +80,16 @@ public class Channel implements Cloneable {
 			case STYPE_TV:		ret += "TV"; break;
 			case STYPE_RADIO:	ret += "RADIO"; break;
 			case STYPE_DATA:	ret += "DATA"; break;
+			case STYPE_HD:		ret += "HD"; break;
 			default:			ret += "unknown"; break;
 		}
 		
 		ret += " encryption: ";
-		switch(this.enc) {
-			case ENC_FTA:		ret += "FTA"; break;
-			case ENC_SCRAMBLED:	ret += "CSA"; break;
-			default:			ret += "unknown"; break;
-		}
+		if((this.enc & FLAG_SCRAMBLED)!=0)
+			ret += "CSA";
+		else
+			ret += "FTA";
+	
 		
 		return ret;
 	}

@@ -1,24 +1,24 @@
 /**
  * @author polskafan <polska at polskafan.de>
- * @version 0.2
+ * @version 0.31
   
 	Copyright 2009 by Timo Dobbrick
 	For more information see http://www.polskafan.de/samsung
  
     This file is part of SamyGO ChanEdit.
 
-    Foobar is free software: you can redistribute it and/or modify
+    This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-    Foobar is distributed in the hope that it will be useful,
+    This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
  */
 
@@ -70,8 +70,7 @@ public class Move {
 		gridData.horizontalAlignment = GridData.CENTER;
 		gridData.grabExcessHorizontalSpace = true;
 		
-		Composite buttons = new Composite(dialog, SWT.CENTER);
-		
+		Composite buttons = new Composite(dialog, SWT.RIGHT);
 		GridLayout buttonLayout = new GridLayout(SWT.FILL, true);
 		buttonLayout.numColumns = 2;
 		buttons.setLayout(buttonLayout);
@@ -114,7 +113,14 @@ class DoMove implements SelectionListener {
 	public void widgetDefaultSelected(SelectionEvent arg0) {}
 
 	public void widgetSelected(SelectionEvent arg0) {
-		int targetNumber = new Integer(text.getText());
+		int targetNumber;
+		try {
+			targetNumber = new Integer(text.getText());
+		} catch(NumberFormatException e) {
+			new ErrorMessage("Cannot get number representation "+e.getMessage());
+			return;
+		}
+		
 		Channel targetChan = Main.channelList.get(targetNumber);
 		TableItem[] items = Main.table.getSelection();
 		Channel[] selected = new Channel[items.length];

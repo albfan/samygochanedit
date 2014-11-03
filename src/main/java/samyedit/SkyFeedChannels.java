@@ -1,24 +1,24 @@
 /**
  * @author polskafan <polska at polskafan.de>
- * @version 0.2
+ * @version 0.31
   
 	Copyright 2009 by Timo Dobbrick
 	For more information see http://www.polskafan.de/samsung
  
     This file is part of SamyGO ChanEdit.
 
-    Foobar is free software: you can redistribute it and/or modify
+    This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-    Foobar is distributed in the hope that it will be useful,
+    This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
  */
 
@@ -111,13 +111,13 @@ public class SkyFeedChannels {
 
 	private static void addChannel(TreeMap<Integer, Channel> channelList, Channel ref, int num, String name, int sid) {
 		Channel c = ref.clone();
-		c.num  = num;
-		c.name = name;
-		c.sid  = sid;
-		c.mpid = 0xFFFF;
-		c.vpid = 0xFFFF;
-		c.stype = Channel.STYPE_TV;
-		c.enc  = Channel.ENC_SCRAMBLED;
+		c.num    = num;
+		c.name   = name;
+		c.sid    = sid;
+		c.mpid   = 0xFFFF;
+		c.vpid   = 0xFFFF;
+		c.stype  = Channel.STYPE_TV;
+		c.enc |= Channel.FLAG_SCRAMBLED;
 		channelList.put(c.num, c);
 	}
 }

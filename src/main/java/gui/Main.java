@@ -1,24 +1,24 @@
 /**
  * @author polskafan <polska at polskafan.de>
- * @version 0.2
+ * @version 0.31
   
 	Copyright 2009 by Timo Dobbrick
 	For more information see http://www.polskafan.de/samsung
  
     This file is part of SamyGO ChanEdit.
 
-    Foobar is free software: you can redistribute it and/or modify
+    This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-    Foobar is distributed in the hope that it will be useful,
+    This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
  */
 
@@ -30,7 +30,6 @@ import java.util.Iterator;
 import java.util.TreeMap;
 
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.dnd.Clipboard;
 import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.dnd.DragSource;
 import org.eclipse.swt.dnd.DragSourceAdapter;
@@ -41,17 +40,14 @@ import org.eclipse.swt.dnd.DropTargetEvent;
 import org.eclipse.swt.dnd.FileTransfer;
 import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.dnd.Transfer;
-import org.eclipse.swt.events.ControlAdapter;
-import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
-import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.graphics.Rectangle;
-import org.eclipse.swt.layout.FillLayout;
-import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.FileDialog;
+import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
@@ -69,20 +65,35 @@ public class Main {
 	static Display display;
 	static Shell shell;
 	static Table table;
-	static Clipboard cb;
+	public static Label statusLabel;
+	
 	static TreeMap<Integer, Channel> channelList = new TreeMap<Integer, Channel>();
 	static String filepath;
 	
+	static String version = "v0.31";
+	
 	public static void main(String[] args) {
 		display = new Display();
-		cb = new Clipboard(display);
 		shell = new Shell(display,  SWT.SHELL_TRIM);
-		shell.setText("SamyGO Channel Editor v0.2");
-				
+		shell.setSize(780, 500);
+		shell.setText("SamyGO Channel Editor "+version);
+		
+		GridLayout layout = new GridLayout();
+		layout.verticalSpacing = 0;
+		layout.marginHeight = 0;
+		layout.marginWidth = 0;
+		layout.numColumns = 1;
+		shell.setLayout(layout);
+		
 		createMenuBar();
 		createTable();
+		table.setLayoutData(new GridData(GridData.FILL_BOTH));
+		
+		statusLabel = new Label(shell, SWT.BORDER);
+		statusLabel.setText("Ready.");
+		statusLabel.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		
 		refresh();
-		shell.pack();
 		shell.open();
 		
 		while (!shell.isDisposed())
@@ -132,25 +143,29 @@ public class Main {
 		MenuBar.setMenu(Menu);
 
 		Item = new MenuItem(Menu, SWT.NONE);
-		Item.setText("Add new Channel...");
+		Item.setText("Add new Channel...\tCtrl+N");
 		Item.setData("action", MyListener.ACTION_ADDCHAN);
+		Item.setAccelerator(SWT.CTRL + 'N');
 		Item.addSelectionListener(myListener);
 
 		Item = new MenuItem(Menu, SWT.SEPARATOR);
 		
 		Item = new MenuItem(Menu, SWT.NONE);
-		Item.setText("Edit Channel...");
+		Item.setText("Edit Channel...\tCtrl+E");
 		Item.setData("action", MyListener.ACTION_EDITCHAN);
+		Item.setAccelerator(SWT.CTRL + 'E');
 		Item.addSelectionListener(myListener);
 		
 		Item = new MenuItem(Menu, SWT.NONE);
-		Item.setText("Move Channel(s)...");
+		Item.setText("Move Channel(s)...\tCtrl+M");
 		Item.setData("action", MyListener.ACTION_MOVECHAN);
+		Item.setAccelerator(SWT.CTRL + 'M');
 		Item.addSelectionListener(myListener);
 		
 		Item = new MenuItem(Menu, SWT.NONE);
-		Item.setText("Delete Channel(s)");
+		Item.setText("Delete Channel(s)\tDel");
 		Item.setData("action", MyListener.ACTION_DELETE);
+		Item.setAccelerator(SWT.DEL);
 		Item.addSelectionListener(myListener);
 		
 		Item = new MenuItem(Menu, SWT.SEPARATOR);
@@ -164,42 +179,62 @@ public class Main {
 		Item = new MenuItem(Menu, SWT.SEPARATOR);
 		
 		Item = new MenuItem(Menu, SWT.NONE);
+		Item.setText("Add to favourites\tCtrl+Up");
+		Item.setData("action", MyListener.ACTION_FAVADD);
+		Item.setAccelerator(SWT.CTRL + SWT.ARROW_UP);
+		Item.addSelectionListener(myListener);
+		
+		Item = new MenuItem(Menu, SWT.NONE);
+		Item.setText("Remove from favourites\tCtrl+Down");
+		Item.setData("action", MyListener.ACTION_FAVDEL);
+		Item.setAccelerator(SWT.CTRL + SWT.ARROW_DOWN);
+		Item.addSelectionListener(myListener);
+		
+		Item = new MenuItem(Menu, SWT.SEPARATOR);
+
+		Item = new MenuItem(Menu, SWT.NONE);
+		Item.setText("Add parental lock\tCtrl+Alt+Up");
+		Item.setData("action", MyListener.ACTION_LOCKADD);
+		Item.setAccelerator(SWT.CTRL + SWT.ALT + SWT.ARROW_UP);
+		Item.addSelectionListener(myListener);
+		
+		Item = new MenuItem(Menu, SWT.NONE);
+		Item.setText("Remove parental lock\tCtrl+Alt+Down");
+		Item.setData("action", MyListener.ACTION_LOCKDEL);
+		Item.setAccelerator(SWT.CTRL + SWT.ALT + SWT.ARROW_DOWN);
+		Item.addSelectionListener(myListener);
+		
+		Item = new MenuItem(Menu, SWT.SEPARATOR);
+		
+		Item = new MenuItem(Menu, SWT.NONE);
 		Item.setText("Add Sky.de Feed Channels");
 		Item.setData("action", MyListener.ACTION_SKY);
+		Item.addSelectionListener(myListener);
+		
+		Item = new MenuItem(mbar, SWT.CASCADE);
+		Item.setText("About");
+		Item.setData("action", MyListener.ACTION_ABOUT);
 		Item.addSelectionListener(myListener);
 	}
 
 	private static void createTable() {
-		shell.setLayout(new FillLayout());
-		final Composite comp = new Composite(shell, SWT.NONE);
-		table = new Table(comp, SWT.MULTI | SWT.FULL_SELECTION | SWT.BORDER);
+		table = new Table(shell, SWT.MULTI | SWT.FULL_SELECTION | SWT.BORDER);
 
-		/* resize table, when program window gets resized */
-		comp.addControlListener(new ControlAdapter() {
-			public void controlResized(ControlEvent e) {
-				Rectangle area = comp.getClientArea();
-				Point preferredSize = table.computeSize(SWT.DEFAULT, SWT.DEFAULT);
-				int width = area.width - 2*table.getBorderWidth();
-				if (preferredSize.y > area.height + table.getHeaderHeight()) {
-					/* Subtract the scrollbar width from the total column width
-					 * if a vertical scrollbar will be required */
-					Point vBarSize = table.getVerticalBar().getSize();
-					width -= vBarSize.x;
-				}
-				
-				/* we don't care about column width, just resize */
-				table.setSize(area.width, area.height);
-			}
-		});
-		
 		table.setHeaderVisible(true);
 		table.setLinesVisible(true);
 		
 		/* build main table */
-		TableColumn[] col = new TableColumn[11];
-		String[] colNames = {"No.", "Name", "Frq", "SR", "Onid", "Tsid", "Sid", "Pid", "Vpid", "Typ", "Enc", "Key"};
-		int[] colWidth = {40, 200, 40, 45, 45, 45, 45, 45, 45, 45, 45};
-		int[] colAlign = {SWT.RIGHT, SWT.LEFT, SWT.CENTER, SWT.CENTER, SWT.CENTER, SWT.CENTER, SWT.CENTER, SWT.CENTER,SWT.CENTER,SWT.CENTER,SWT.CENTER};
+		TableColumn[] col = new TableColumn[14];
+		String[] colNames = {"No.", "Name", "Frq", "SR", "Nid",
+				"Onid", "Tsid", "Sid", "Pid", "Vpid",
+				"Typ", "Fav", "Enc", "Lock"};
+		int[] colWidth = {40, 180, 40, 45, 45,
+				45, 45, 45, 45, 45,
+				40, 40, 40, 40};
+		int[] colAlign = {SWT.RIGHT, SWT.LEFT, SWT.CENTER, SWT.CENTER, SWT.CENTER,
+				SWT.CENTER, SWT.CENTER, SWT.CENTER, SWT.CENTER, SWT.CENTER,
+				SWT.CENTER, SWT.CENTER, SWT.CENTER, SWT.CENTER};
+		
 		for(int c = 0; c < col.length; c++) {
 			col[c] = new TableColumn(table, SWT.CENTER);
 			col[c].setText(colNames[c]);
@@ -208,8 +243,14 @@ public class Main {
 			col[c].setResizable(true);
 			col[c].addListener(SWT.Selection, SortListenerFactory.getListener());
 		}
-		/* set a starting size */
-		table.setSize(780, 500);
+		
+		/* enable double clicking to edit a channel */
+		table.addSelectionListener(new SelectionListener() {
+		    public void widgetDefaultSelected(SelectionEvent arg0) {
+		        new Edit(Main.getSelected()[0]);
+		    }
+		    public void widgetSelected(SelectionEvent arg0) { }
+		});
 		
 		/* enable dragging... */
 	    DragSource ds = new DragSource(table, DND.DROP_DEFAULT | DND.DROP_MOVE);
@@ -249,8 +290,10 @@ public class Main {
 					String fileList[] = (String[])event.data;
 					table.removeAll();
 					table.clearAll();
-					Main.channelList.clear();
+					channelList.clear();
 					new MapParser(fileList[0], channelList);
+					filepath = fileList[0];
+					Main.statusLabel.setText("Finished opening file: "+Main.filepath);
 					refresh();
 				}
 				
@@ -294,10 +337,24 @@ public class Main {
 			Channel c = it.next();
 			/* new item */
 			TableItem t = new TableItem(table, SWT.LEFT);
+			
+			String typ;
+			switch(c.stype) {
+				case Channel.STYPE_TV:		typ = "TV";		break;
+				case Channel.STYPE_RADIO:	typ = "Radio";	break;
+				case Channel.STYPE_DATA:	typ = "Data";	break;
+				case Channel.STYPE_HD:		typ = "HD";		break;
+				default:					typ = "?";		break;
+			}
+			
+			String fav	= (c.fav == Channel.FAV_Y) ? "yes" : "no";
+			String enc	= ((c.enc & Channel.FLAG_SCRAMBLED)!=0) ? "yes" : "no"; 
+			String lock	= (c.lock == Channel.LOCK_Y) ? "yes" : "no";
+			
 			/* build text and asign it */
 			String[] col = new String[] { c.num+"", c.name, c.freq+"",
-				c.symbr+"", c.onid+"", c.tsid+"",  c.sid+"",
-				c.mpid+"",  c.vpid+"", c.stype+"", c.enc+""
+				c.symbr+"", c.nid+"", c.onid+"", c.tsid+"", c.sid+"",
+				 c.mpid+"",  c.vpid+"", typ, fav, enc, lock
 			};
 			t.setText(col);
 			
@@ -388,7 +445,12 @@ class MyListener implements SelectionListener {
 	public static final int ACTION_MOVECHAN = 5;
 	public static final int ACTION_DELETE   = 6;
 	public static final int ACTION_FINDCHAN = 7;
-	public static final int ACTION_SKY      = 8;
+	public static final int ACTION_FAVADD	= 8;
+	public static final int ACTION_FAVDEL	= 9;
+	public static final int ACTION_LOCKADD	= 10;
+	public static final int ACTION_LOCKDEL	= 11;
+	public static final int ACTION_SKY      = 12;
+	public static final int ACTION_ABOUT    = 128;
 	
 	private Shell shell;
 	MyListener(Shell shell) {
@@ -410,8 +472,6 @@ class MyListener implements SelectionListener {
 					/* show open dialog to select a file */
 					FileDialog fd = new FileDialog(shell, SWT.OPEN);
 					fd.setText("Open");
-					String[] filterExt = {"*.*"};
-					fd.setFilterExtensions(filterExt);
 					String path = fd.open();
 					if(path == null) return;
 					
@@ -425,11 +485,21 @@ class MyListener implements SelectionListener {
 					
 					/* save filepath for later */
 					Main.filepath = path;
+					Main.statusLabel.setText("Finished opening file: "+Main.filepath);
 					return;
 				case ACTION_SAVE:
-					if (Main.filepath == null) return;
-					/* write the file out */
-					MapParser.write(Main.filepath, Main.channelList);
+					if (Main.filepath == null) {
+						/* show save dialog to select a filename to save to */
+						FileDialog fsd = new FileDialog(shell, SWT.SAVE);
+						fsd.setText("Save");
+						String spath = fsd.open();
+						if(spath == null) return;
+						
+						MapParser.write(spath, Main.channelList);
+						Main.filepath = spath;
+					} else {
+						MapParser.write(Main.filepath, Main.channelList);
+					}
 					return;
 				case ACTION_SAVEAS:
 					/* show save dialog to select a filename to save to */
@@ -442,6 +512,7 @@ class MyListener implements SelectionListener {
 					
 					/* write the file out */
 					MapParser.write(spath, Main.channelList);
+					Main.filepath = spath;
 					return;
 				case ACTION_ADDCHAN:
 					new Edit(new Channel());
@@ -453,18 +524,46 @@ class MyListener implements SelectionListener {
 					}
 					return;
 				case ACTION_MOVECHAN:
+					/* nothing selected, don't do anything */
+					if(Main.getSelected().length==0) return;
 					new Move();
 					return;
 				case ACTION_DELETE:
-					/* delete marked channels */
 					Main.deleteChannels(Main.getSelected());
 					return;
 				case ACTION_FINDCHAN:
 					new Find();
 					return;
+				case ACTION_FAVADD:
+					Channel[] addfav = Main.getSelected();
+					for(int i = 0; i<addfav.length; i++)
+						addfav[i].fav = Channel.FAV_Y;
+					Main.refresh();
+					return;
+				case ACTION_FAVDEL:
+					Channel[] delfav = Main.getSelected();
+					for(int i = 0; i<delfav.length; i++)
+						delfav[i].fav = Channel.FAV_N;
+					Main.refresh();
+					return;
+				case ACTION_LOCKADD:
+					Channel[] addlock = Main.getSelected();
+					for(int i = 0; i<addlock.length; i++)
+						addlock[i].lock = Channel.LOCK_Y;
+					Main.refresh();
+					return;
+				case ACTION_LOCKDEL:
+					Channel[] dellock = Main.getSelected();
+					for(int i = 0; i<dellock.length; i++)
+						dellock[i].lock = Channel.LOCK_N;
+					Main.refresh();
+					return;
 				case ACTION_SKY:
 					SkyFeedChannels.add(Main.channelList);
 					Main.refresh();
+					return;
+				case ACTION_ABOUT:
+					new About();
 					return;
 				default:
 					return;
@@ -496,8 +595,12 @@ class SortListenerFactory implements Listener {
             String v2 = t2.getText(colIndex).toLowerCase();
 
             switch(colIndex) {
-            	/* we are in column one, treat as text */
+            	/* we are in a text column, treat as text */
             	case 1:
+            	case 10:
+            	case 11:
+            	case 12:
+            	case 13:
             		return v1.compareTo(v2)*updown;
             	/* we are in another column, parse to integer and compare then */
             	default:

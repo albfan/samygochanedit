@@ -33,17 +33,16 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Monitor;
 import org.eclipse.swt.widgets.Shell;
 
-public class ErrorMessage {
-	public ErrorMessage(String error) {
-		createGUI(Main.shell, error);
-	}
-
-	public ErrorMessage(Shell shell, String error) {
-		createGUI(shell, error);
-	}
+public class About {
+	private static String text = "SamyGO Channel Editor\n" +
+	"a Java based Samsung Channel Editor\n" +
+	"Version: "+Main.version+"\n\n" +
+	"Written and developed by polskafan <polska@polskafan.de>\n" +
+	"For more information see www.polskafan.de/samsung\n\n"+
+    "This program is free software: you can redistribute it and/or modify\nit under the terms of the GNU General Public License as published by\nthe Free Software Foundation, either version 3 of the License, or\n(at your option) any later version.\n\nThis program is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty of\nMERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License\nalong with this program.  If not, see <http://www.gnu.org/licenses/>.";
 	
-	private void createGUI(Shell shell, String error) {
-		Shell dialog = new Shell(shell, SWT.DIALOG_TRIM | SWT.APPLICATION_MODAL);
+	public About() {
+		Shell dialog = new Shell(Main.shell, SWT.DIALOG_TRIM | SWT.APPLICATION_MODAL);
 		GridLayout layout = new GridLayout();
 		layout.verticalSpacing = 5;
 		layout.marginHeight = 5;
@@ -52,9 +51,8 @@ public class ErrorMessage {
 		dialog.setLayout(layout);
  		
 		GridData g = new GridData(GridData.FILL_HORIZONTAL);
-		Label l = new Label(dialog, SWT.CENTER);
-		l.setText(error);
-		l.pack();
+		Label l = new Label(dialog, SWT.NONE);
+		l.setText(text);
 		l.setLayoutData(g);
 		
 		g = new GridData(GridData.HORIZONTAL_ALIGN_CENTER);
@@ -64,7 +62,7 @@ public class ErrorMessage {
 		b.setLayoutData(g);
 		
 		dialog.pack();
-		dialog.setText("Error");
+		dialog.setText("About SamyGO ChanEdit");
 		
 	    Monitor primary = Main.display.getPrimaryMonitor();
 	    Rectangle bounds = primary.getBounds();

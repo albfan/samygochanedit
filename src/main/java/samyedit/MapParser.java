@@ -1,30 +1,31 @@
 /**
  * @author polskafan <polska at polskafan.de>
- * @version 0.2
+ * @version 0.31
   
 	Copyright 2009 by Timo Dobbrick
 	For more information see http://www.polskafan.de/samsung
  
     This file is part of SamyGO ChanEdit.
 
-    Foobar is free software: you can redistribute it and/or modify
+    This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-    Foobar is distributed in the hope that it will be useful,
+    This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
  */
 
 package samyedit;
 
 import gui.ErrorMessage;
+import gui.Main;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -46,12 +47,13 @@ public class MapParser {
 		
 		if((int)file.length() != 248000) {
 			new ErrorMessage("File length does not match 248.000 bytes!");
+			Main.statusLabel.setText("");
 			return;
 		}
 		
 		/* read rawData
 		 * attention, byte data type is not unsigned, conversion must
-		 * be applie to negative values */
+		 * be applied to negative values */
 		
 		byte[] rawData;
 		try {
@@ -71,17 +73,22 @@ public class MapParser {
 			chan.num	= convertEndianess(rawData[offset]   , rawData[offset+ 1]);
 			chan.vpid	= convertEndianess(rawData[offset+ 2], rawData[offset+ 3]);
 			chan.mpid	= convertEndianess(rawData[offset+ 4], rawData[offset+ 5]);
+			chan.fav	= rawData[offset+ 6];
 			chan.qam	= rawData[offset+ 7];
 			chan.stype	= rawData[offset+ 9];
 			chan.sid	= convertEndianess(rawData[offset+10], rawData[offset+11]);
 			chan.onid	= convertEndianess(rawData[offset+12], rawData[offset+13]);
+			chan.nid	= convertEndianess(rawData[offset+14], rawData[offset+15]);
 			chan.enc	= rawData[offset+23];
 			chan.freq	= convertEndianess(rawData[offset+26], rawData[offset+27]);
 			chan.symbr	= convertEndianess(rawData[offset+32], rawData[offset+33]);
 			chan.bouqet	= convertEndianess(rawData[offset+34], rawData[offset+35]);
 			chan.tsid	= convertEndianess(rawData[offset+36], rawData[offset+37]);
+			chan.lock	= rawData[offset+245];
 			
-			/* read channel name, only reads first 256 bytes, has to be rewritten if
+			/* read channel name (max. 100 chars) 
+			 * 
+			 * only reads a byte, has to be rewritten if
 			 * the channel name is actually unicode utf8
 			 */
 			for(int j = 0; j<100; j++) {
@@ -102,7 +109,8 @@ public class MapParser {
 		try {
 			outStream = new FileOutputStream(f);
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+			new ErrorMessage("Cannot write to file:\n"+e.getMessage());
+			Main.statusLabel.setText("");
 			return;
 		}
 		
@@ -114,14 +122,13 @@ public class MapParser {
 			revertEndianess(rawData,  0, chan.num);
 			revertEndianess(rawData,  2, chan.vpid);
 			revertEndianess(rawData,  4, chan.mpid);
-			rawData[ 6] = (byte)0x46;
+			rawData[ 6] = chan.fav;
 			rawData[ 7] = chan.qam;
 			rawData[ 8] = (byte)0xE8;
 			rawData[ 9] = chan.stype;
 			revertEndianess(rawData, 10, chan.sid);
 			revertEndianess(rawData, 12, chan.onid);
-			rawData[14] = (byte)0x02;
-			rawData[15] = (byte)0xF0;
+			revertEndianess(rawData, 14, chan.nid);
 			rawData[20] = (byte)0xFF;
 			rawData[21] = (byte)0xFF;
 			rawData[22] = (byte)0xFF;
@@ -141,6 +148,8 @@ public class MapParser {
 			for(int i = 0; i<name.length;i++) {
 				rawData[45+2*i] = (byte)name[i];
 			}
+			
+			rawData[245] = chan.lock;
 			
 			for(int i = 0; i<247; i++) {
 				rawData[247] += rawData[i];
@@ -166,6 +175,9 @@ public class MapParser {
 			}
 			entries++;
 		}
+		
+		/* write the file out */
+		Main.statusLabel.setText("Channel list written to file: "+file);
 		return;
 	}
 	

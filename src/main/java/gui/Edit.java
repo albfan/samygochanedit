@@ -1,24 +1,24 @@
 /**
  * @author polskafan <polska at polskafan.de>
- * @version 0.2
+ * @version 0.31
   
 	Copyright 2009 by Timo Dobbrick
 	For more information see http://www.polskafan.de/samsung
  
     This file is part of SamyGO ChanEdit.
 
-    Foobar is free software: you can redistribute it and/or modify
+    This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-    Foobar is distributed in the hope that it will be useful,
+    This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
  */
 
@@ -44,9 +44,12 @@ import org.eclipse.swt.widgets.Text;
 import samyedit.Channel;
 
 public class Edit {
-	public Text[]   t = new Text[8];
-	public Button[] r = new Button[5];
 	public Channel channel;
+	
+	public Text[]   t = new Text[9];
+	public Button[] r_stype = new Button[4];
+	public Button[] r_qam   = new Button[2];
+	public Button[] r_misc  = new Button[3];
 	
 	public Edit(Channel channel) {
 		this.channel = channel;
@@ -94,6 +97,12 @@ public class Edit {
 		t[2] = new Text(dialog, SWT.SINGLE | SWT.BORDER);
 		t[2].setText(channel.symbr+"");
 		t[2].setLayoutData(gridData);
+
+		l = new Label(dialog, SWT.CENTER);
+		l.setText("NID:");
+		t[8] = new Text(dialog, SWT.SINGLE | SWT.BORDER);
+		t[8].setText(channel.nid+"");
+		t[8].setLayoutData(gridData);
 		
 		l = new Label(dialog, SWT.CENTER);
 		l.setText("ONID:");
@@ -133,30 +142,49 @@ public class Edit {
 		Group g = new Group(dialog, SWT.CENTER);
 		g.setText("Service Type");
 		g.setLayout(new RowLayout());
-		r[0] = new Button(g, SWT.RADIO);
-		r[0].setText("TV");
-		if(channel.stype == Channel.STYPE_TV)    r[0].setSelection(true);
-		r[1] = new Button(g, SWT.RADIO);
-		r[1].setText("Radio");
-		if(channel.stype == Channel.STYPE_RADIO) r[1].setSelection(true);
-		r[2] = new Button(g, SWT.RADIO);
-		r[2].setText("Data");
-		if(channel.stype == Channel.STYPE_DATA)  r[2].setSelection(true);
+		r_stype[0] = new Button(g, SWT.RADIO);
+		r_stype[0].setText("TV");
+		if(channel.stype == Channel.STYPE_TV)    r_stype[0].setSelection(true);
+		r_stype[1] = new Button(g, SWT.RADIO);
+		r_stype[1].setText("Radio");
+		if(channel.stype == Channel.STYPE_RADIO) r_stype[1].setSelection(true);
+		r_stype[2] = new Button(g, SWT.RADIO);
+		r_stype[2].setText("Data");
+		if(channel.stype == Channel.STYPE_DATA)  r_stype[2].setSelection(true);
+		r_stype[3] = new Button(g, SWT.RADIO);
+		r_stype[3].setText("HD");
+		if(channel.stype == Channel.STYPE_HD)  r_stype[3].setSelection(true);
 		g.setLayoutData(gridData);
 		g.pack();
 		
 		g = new Group(dialog, SWT.CENTER);
 		g.setText("Modulation");
 		g.setLayout(new RowLayout());
-		r[3] = new Button(g, SWT.RADIO);
-		r[3].setText("QAM64");
-		if(channel.qam == Channel.QAM64)  r[3].setSelection(true);
-		r[4] = new Button(g, SWT.RADIO);
-		r[4].setText("QAM256");
-		if(channel.qam == Channel.QAM256) r[4].setSelection(true);
+		r_qam[0] = new Button(g, SWT.RADIO);
+		r_qam[0].setText("QAM64");
+		if(channel.qam == Channel.QAM64)  r_qam[0].setSelection(true);
+		r_qam[1] = new Button(g, SWT.RADIO);
+		r_qam[1].setText("QAM256");
+		if(channel.qam == Channel.QAM256) r_qam[1].setSelection(true);
 		g.setLayoutData(gridData);
 		g.pack();
 
+		g = new Group(dialog, SWT.CENTER);
+		g.setText("Misc");
+		g.setLayout(new RowLayout());
+		r_misc [0] = new Button(g, SWT.CHECK);
+		r_misc[0].setText("Favourite");
+		if(channel.fav == Channel.FAV_Y)  r_misc[0].setSelection(true);
+		r_misc[1] = new Button(g, SWT.CHECK);
+		r_misc[1].setText("Encrypted");
+		if((channel.enc & Channel.FLAG_SCRAMBLED)!=0) r_misc[1].setSelection(true);
+		r_misc[2] = new Button(g, SWT.CHECK);
+		r_misc[2].setText("Locked");
+		if(channel.lock == Channel.LOCK_Y) r_misc[2].setSelection(true);
+		
+		g.setLayoutData(gridData);
+		g.pack();
+		
 		gridData = new GridData();
 		gridData.horizontalSpan = 2;
 		gridData.horizontalAlignment = GridData.CENTER;
@@ -208,20 +236,42 @@ class doEdit implements SelectionListener {
 		Channel channel = edit.channel;
 		
 		channel.name	= edit.t[0].getText();
-		channel.freq	= new Integer(edit.t[1].getText());
-		channel.symbr	= new Integer(edit.t[2].getText());
-		channel.onid	= new Integer(edit.t[3].getText());
-		channel.tsid	= new Integer(edit.t[4].getText());
-		channel.sid		= new Integer(edit.t[5].getText());
-		channel.mpid	= new Integer(edit.t[6].getText());
-		channel.vpid	= new Integer(edit.t[7].getText());
+		try {
+			channel.freq	= new Integer(edit.t[1].getText());
+			channel.symbr	= new Integer(edit.t[2].getText());
+			channel.onid	= new Integer(edit.t[3].getText());
+			channel.tsid	= new Integer(edit.t[4].getText());
+			channel.sid		= new Integer(edit.t[5].getText());
+			channel.mpid	= new Integer(edit.t[6].getText());
+			channel.vpid	= new Integer(edit.t[7].getText());
+			channel.nid 	= new Integer(edit.t[8].getText());
+		} catch(NumberFormatException e) {
+			new ErrorMessage("Cannot get number representation "+e.getMessage());
+			return;
+		}
 		
-		if(edit.r[0].getSelection()) channel.stype = Channel.STYPE_TV;
-		if(edit.r[1].getSelection()) channel.stype = Channel.STYPE_RADIO;
-		if(edit.r[2].getSelection()) channel.stype = Channel.STYPE_DATA;
+		if(edit.r_stype[0].getSelection()) channel.stype = Channel.STYPE_TV;
+		if(edit.r_stype[1].getSelection()) channel.stype = Channel.STYPE_RADIO;
+		if(edit.r_stype[2].getSelection()) channel.stype = Channel.STYPE_DATA;
+		if(edit.r_stype[3].getSelection()) channel.stype = Channel.STYPE_HD;
 		
-		if(edit.r[3].getSelection()) channel.qam = Channel.QAM64;
-		if(edit.r[4].getSelection()) channel.qam = Channel.QAM256;
+		if(edit.r_qam[0].getSelection()) channel.qam = Channel.QAM64;
+		if(edit.r_qam[1].getSelection()) channel.qam = Channel.QAM256;
+		
+		if(edit.r_misc[0].getSelection())
+			channel.fav = Channel.FAV_Y;
+		else
+			channel.fav = Channel.FAV_N;
+		
+		if(edit.r_misc[1].getSelection())
+			channel.enc |= Channel.FLAG_SCRAMBLED;
+		else
+			channel.enc &= ~Channel.FLAG_SCRAMBLED;
+		
+		if(edit.r_misc[2].getSelection())
+			channel.lock = Channel.LOCK_Y;
+		else
+			channel.lock = Channel.LOCK_N;
 		
 		if(channel.num == -1) {
 			try {
