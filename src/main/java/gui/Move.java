@@ -144,7 +144,16 @@ class DoMove implements SelectionListener {
 					targetChan = new AirCableChannel();
 					break;
 				case Channel.TYPE_SAT:
-					targetChan = new SatChannel();
+					switch (Main.scmVersion) {
+					case 'C':
+						targetChan = new SatChannel();
+						break;
+					case 'D':
+						targetChan = new SatChannel();
+						break;
+					default:
+						targetChan = new SatChannel();
+					}
 					break;
 			}
 			targetChan.name = "DUMMY";

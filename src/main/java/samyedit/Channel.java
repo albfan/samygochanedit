@@ -1,6 +1,6 @@
 /**
  * @author polskafan <polska at polskafan.de>
- * @version 0.42
+ * @version 0.42c
   
 	Copyright 2009 by Timo Dobbrick
 	For more information see http://www.polskafan.de/samsung
@@ -24,11 +24,14 @@
 
 package samyedit;
 
-/* new Channel object, make it cloneable if we need to copy a channel */
+/** new Channel class, <p>made it cloneable if we need to copy a channel</p> */
 public class Channel implements Cloneable {
+//	public static int lChan = 292; // right for C-Series only!)
+	
 	public static final byte TYPE_CABLE	= (byte)0x01;
 	public static final byte TYPE_AIR	= (byte)0x02;
 	public static final byte TYPE_SAT	= (byte)0x04;
+//	public static final byte TYPE_SAT_D	= (byte)0x05;
 	public static final byte TYPE_CLONE	= (byte)0x08;
 	
 	public static final byte STYPE_TV		= (byte)0x01;
@@ -40,7 +43,7 @@ public class Channel implements Cloneable {
 	public static final byte VTYPE_MPEG4	= (byte)0x01;
 	
 	public static final byte FLAG_ACTIVE	= (byte)0x80;
-	public static final byte FLAG_SCRAMBLED = (byte)0x20;
+	public static final byte FLAG_SCRAMBLED = (byte)0x01; //RB changed from 0x20 to 0x01
 	public static final byte FLAG_LOCK		= (byte)0x01;
 	
 	public static final byte FLAG_FAV_1		= (byte)0x01;
@@ -66,7 +69,8 @@ public class Channel implements Cloneable {
 	public byte fav79	= (byte)0x00;
 	public byte lock	= (byte)0x00; 
 
-	/* make the channel printable */
+	/** prints the content of the channel into a string */
+	@Override
 	public String toString() {
 		String ret = "cnum: "+this.num + " name: "+this.name + " sid: "+this.sid
 		+ " mpid: "+this.mpid + " vpid: "+this.vpid	+ " bouqet: "+this.bouqet
@@ -74,25 +78,25 @@ public class Channel implements Cloneable {
 		
 		ret += " type: ";
 		switch(this.stype) {
-			case STYPE_TV:		ret += "TV"; break;
+			case STYPE_TV:		ret += "TV-SD"; break;
 			case STYPE_RADIO:	ret += "RADIO"; break;
 			case STYPE_DATA:	ret += "DATA"; break;
-			case STYPE_HD:		ret += "HD"; break;
+			case STYPE_HD:		ret += "TV-HD"; break;
 			default:			ret += "unknown"; break;
 		}
 		
 		ret += " encryption: ";
 		if((this.enc & FLAG_SCRAMBLED)!=0)
-			ret += "CSA";
+			ret += "CSA"; //Content Secured on Air
 		else
-			ret += "FTA";
-		
+			ret += "FTA"; //Free To Air
 		return ret;
 	}
 	
-	/* clone function, if a channel needs to be copied
+	/** clone function, if a channel needs to be copied
 	 * just invoke clone() from Object class */
-    public Channel clone() {
+    @Override
+	public Channel clone() {
     	Channel theClone = null;
         try {
           theClone = (Channel) super.clone();
@@ -101,4 +105,24 @@ public class Channel implements Cloneable {
         }
         return theClone;
 	}
+
+	/* Endianess must be converted as Samsung and Java VM don't share the same
+	 * endianess */
+	
+	protected static int convertEndianess(byte b, byte c) {
+		int lower = b;
+		int upper = c;
+		if(b<0) lower += 256;
+		if(c<0) upper += 256;
+		return lower+(upper<<8);
+	}
+	
+	protected static void revertEndianess(byte[] b, int offset, int data) {
+		b[offset] = (byte) (data & 0x00ff); 
+		b[offset+1]   = (byte)(data>>8);
+		return;
+	}
+	
+	/* read bytes, so we are binary safe */
+
 }

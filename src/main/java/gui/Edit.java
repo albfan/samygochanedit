@@ -254,7 +254,8 @@ public class Edit {
 		l = new Label(dialog, SWT.CENTER);
 		l.setText("Frequency:");
 		t_add[1] = new Text(dialog, SWT.SINGLE | SWT.BORDER);
-		t_add[1].setText(c.freq+"");
+//		t_add[1].setText(c.freq+"");
+		t_add[1].setText(c.getFreq()+"");
 		t_add[1].setLayoutData(gridData);
 		
 		l = new Label(dialog, SWT.CENTER);
@@ -400,7 +401,8 @@ class doEdit implements SelectionListener {
 				AirCableChannel cable = (AirCableChannel) channel;
 				try {
 					cable.nid	= new Integer(edit.t_add[0].getText());
-					cable.freq	= new Integer(edit.t_add[1].getText());
+//					cable.freq	= new Integer(edit.t_add[1].getText());
+					cable.setFreq(edit.t_add[1].getText());
 					cable.symbr	= new Integer(edit.t_add[2].getText());
 				} catch(NumberFormatException e) {
 					new ErrorMessage("Cannot get number representation "+e.getMessage());

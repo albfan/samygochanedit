@@ -33,15 +33,30 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Monitor;
 import org.eclipse.swt.widgets.Shell;
 
+/** defines an Error PopUp object */
 public class ErrorMessage {
+	/** creates a pop up with the headline error
+	 * 
+	 * @param error the message of the pop-up
+	 */
 	public ErrorMessage(String error) {
 		createGUI(Main.shell, error);
 	}
 
+	/** creates a pop up with the headline error and
+	 * 
+	 * @param shell the shell where the pop-up will be linked to
+	 * @param error the message of the pop-up
+	 */
 	public ErrorMessage(Shell shell, String error) {
 		createGUI(shell, error);
 	}
 	
+	/** creates a pop up with the headline error and
+	 * 
+	 * @param shell the shell where the pop-up will be linked to
+	 * @param error the message of the pop-up
+	 */
 	private void createGUI(Shell shell, String error) {
 		Shell dialog = new Shell(shell, SWT.DIALOG_TRIM | SWT.APPLICATION_MODAL);
 		GridLayout layout = new GridLayout();
